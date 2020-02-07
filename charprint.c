@@ -2,6 +2,7 @@
 #include <string.h>
 #include <math.h>
 
+#include <stdint.h>
 
 int main() {
 
@@ -71,17 +72,24 @@ int main() {
 	strncpy(&str1[3], str2, 3);
 	printf("after: str1: %s, str2: %s\n", str1, str2);
 
-	*/
 
 	float temp_var = strtof("-1.5342", NULL);
 	printf("temp_var orig: %f\n", temp_var);
 
 	char tmp_var_str[6] = {0};
 	
-	/* The generated string has a length of at most n-1, 7-1 = 6 here and %06.2f means total of 6 characters from which two are decimals */
+	// The generated string has a length of at most n-1, 7-1 = 6 here and %06.2f means total of 6 characters from which two are decimals 
 	snprintf(tmp_var_str, 7, "%06.2f", temp_var);
 
-	printf("after snprintf: %s", tmp_var_str);
+	printf("after snprintf: %s\n", tmp_var_str);
+
+	*/
+
+	uint8_t mode = 0xAA;
+	// char tmp = '0' + mode;
+	printf("%x", mode);
+
+
 
 	return 0;
 }
