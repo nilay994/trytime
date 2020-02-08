@@ -16,14 +16,14 @@ typedef enum {
 
 // uint32_t hold hex for ieee754 float
 typedef struct {
-    uint32_t x;     // lat
-    uint32_t y;     // long
-    uint32_t z;     // alt
+    float x;     // lat
+    float y;     // long
+    float z;     // alt
 } vec3f_t;
 
 typedef struct {
     vec3f_t pos;
-    uint32_t heading;
+    float heading;
     // vec3f_t vel;
     // vec3f_t att;
     // vec3f_t omega;

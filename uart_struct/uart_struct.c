@@ -4,18 +4,6 @@
 
 #define DEBUG
 
-
-void printpacketscreen(char *s) {
-    static int i = 0;
-    printf("||");
-    while (*s!=0 || *s!='\n' || *s!='\r' || *s!='\0') {
-        printf("%c", s[i]);
-        i = i + 1;
-    }
-    i = 0;
-    printf("||\n");
-}
-
 /* come back to it later
 void printstruct(uart_packet_t uart_packet) {
     printf("start_byte: %c \n /
@@ -26,61 +14,56 @@ void printstruct(uart_packet_t uart_packet) {
     end_byte:");
 } */
 
-void struct2packet(uart_packet_t uart_packet) {
-    // char s[MAX_LENGTH] = {0};
-    // snprintf expects size of s to atleast be sizeof(uart_packet_t) + 1
-    // '0' + i trick
-    // uint8_t can go directly to uart
-    int i = UNPADDED_LENGTH;
-    char s[50] = {0};
-    // clear char array
-    memset(s, 0, UNPADDED_LENGTH);
+/* return length of packet */
+uint8_t struct2packet(uart_packet_t uart_packet, uint8_t* s) {
     
-    // opened up struct all temp
-    uint8_t uart_packet_start_byte = uart_packet.start_byte;
-    i = i - sizeof(uart_packet.start_byte);
-    s[i] = uart_packet_start_byte; // 20
-
-    // all typedef enums get uint8_t
-    uint8_t uart_packet_source_id = uart_packet.source_id;
-    i = i - sizeof(uart_packet.source_id); 
-    s[i] = uart_packet_source_id;  // 19
+    uint8_t i = 0;
     
-    uint8_t uart_packet_destination_id = uart_packet.destination_id;
-    i = i - sizeof(uart_packet.destination_id);
-    s[i] = uart_packet_destination_id; // 18
+    s[i] = uart_packet.start_byte; // 0
+    i = i + sizeof(uart_packet.start_byte); 
 
-    uint8_t uart_packet_frame_type = uart_packet.frame_type;
-    i = i - sizeof(uart_packet.frame_type);
-    s[i] = uart_packet_frame_type;  // 17
+    s[i] = uart_packet.source_id;  // 1
+    i = i + sizeof(uart_packet.source_id); 
 
-    // opened up struct, highest in the array = sent first, ieee754 when memcpy of float
-    uint8_t uart_packet_drone_state_pos_x[4];
-    i = i - sizeof(uart_packet.drone_state.pos.x); 
-    memcpy(&s[i], &uart_packet.drone_state.pos.x, sizeof(uart_packet.drone_state.pos.x)); // 13-16
+    s[i] = uart_packet.destination_id; // 2
+    i = i + sizeof(uart_packet.destination_id);
     
+    s[i] = uart_packet.frame_type;  // 3
+    i = i + sizeof(uart_packet.frame_type);
+    
+    // opened up struct, point to highest in the array while ieee754 memcpy of float
+    // caution: little-endian
+    memcpy(&s[i], &uart_packet.drone_state.pos.x, 
+            sizeof(uart_packet.drone_state.pos.x)); // 4-7 (7 is MSB)
+    i = i + sizeof(uart_packet.drone_state.pos.x); 
+    
+    memcpy(&s[i], &uart_packet.drone_state.pos.y, 
+            sizeof(uart_packet.drone_state.pos.y)); // 8-11 (11 is MSB)
+    i = i + sizeof(uart_packet.drone_state.pos.y); 
 
-    uint8_t uart_packet_drone_state_pos_y[4];
-    i = i - sizeof(uart_packet.drone_state.pos.y); 
-    memcpy(&s[i], &uart_packet.drone_state.pos.y, sizeof(uart_packet.drone_state.pos.y)); // 9-12
+    memcpy(&s[i], &uart_packet.drone_state.pos.z, 
+            sizeof(uart_packet.drone_state.pos.z)); // 12-15 (15 is MSB)
+    i = i + sizeof(uart_packet.drone_state.pos.z); 
 
-    uint8_t uart_packet_drone_state_pos_z[4];
-    i = i - sizeof(uart_packet.drone_state.pos.z); 
-    memcpy(&s[i], &uart_packet.drone_state.pos.z, sizeof(uart_packet.drone_state.pos.z)); // 5-8 
 
-    uint8_t uart_packet_drone_state_heading[4];
-    i = i - sizeof(uart_packet.drone_state.heading); 
-    memcpy(&s[i], &uart_packet.drone_state.heading, sizeof(uart_packet.drone_state.heading)); // 1-4 
+    memcpy(&s[i], &uart_packet.drone_state.heading, 
+            sizeof(uart_packet.drone_state.heading)); // 16-19 (19 is MSB) 
+    i = i + sizeof(uart_packet.drone_state.heading); 
 
-    uint8_t uart_packet_end_byte = uart_packet.end_byte; // 0
+    s[i] = uart_packet.end_byte; // 20
+    i = i + sizeof(uart_packet.end_byte);
 
-    char tmp[UNPADDED_LENGTH+1] = {0};
-    snprintf(tmp, 21, "%s", s);
-    printf("\n||%s||\n", tmp);
-
+    // TODO: append crc
+    
     #ifdef DEBUG
-        // printpacketscreen(s);
+        printf("Packet:");
+        for (int cnt = 0; cnt < UNPADDED_LENGTH; cnt++) {
+            printf("|0x%02x|", s[cnt]);
+        }
+        printf("\n");
     #endif
+
+    return i;
 }
 
 void packet2struct(uart_packet_t* uart_packet, char *s) {
@@ -98,16 +81,17 @@ void main() {
         .frame_type = 4,
         .drone_state = {
             .pos = {
-                .x = 1.5,
-                .y = 2.5,
-                .z = 3.5,
+                .x = 113.523,
+                .y = 212.5,
+                .z = -9993.5,
             },
-        .heading = -350,
+        .heading = 1,
         },
-        .end_byte = 5 
+        .end_byte = 5,
     };
-    char *s[MAX_LENGTH] = {0};
-    struct2packet(uart_packet);
+
+    char s[MAX_LENGTH] = {0};
+    uint8_t len = struct2packet(uart_packet, s);
 
     // char populate_str[MAX_LENGTH] = {'$', 0, 1, 1, -1.2, -1.2, 1.2, 1.2, '*'};
     // // terminate at struct end
@@ -119,3 +103,15 @@ void main() {
 
 /* casting char buffers into struct depends on endian-ness and paddings of the CPU, so it is risky to cast a string buffer to typedefed struct */
 /* source, stackoverflow: Mrunmoy */
+
+// char s[MAX_LENGTH] = {0};
+// snprintf expects size of s to atleast be sizeof(uart_packet_t) + 1
+// '0' + i trick
+
+// /* uint8_t can go directly to uart */
+// uint8_t s[UNPADDED_LENGTH] = {0};
+// // clear unsigned char array
+// memset(s, 0, UNPADDED_LENGTH);
+
+// opened up struct all temp
+// all typedef enums get uint8_t
