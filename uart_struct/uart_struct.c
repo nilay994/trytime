@@ -58,7 +58,8 @@ uint8_t struct2packet(uart_packet_t uart_packet, uint8_t* s) {
 
 uint8_t packet2struct(uart_packet_t* uart_packet, uint8_t *s) {
 
-    // endian-ness solved but padding is a problem: memcpy(uart_packet, &s, sizeof(uart_packet_t));
+    /* endian-ness solved but padding is a problem: can't cast entire string to struct:
+    memcpy(uart_packet, &s, sizeof(uart_packet_t)); */
 
     uint8_t i = 0;
     memcpy(&uart_packet->start_byte, &s[i], sizeof(uart_packet->start_byte));
