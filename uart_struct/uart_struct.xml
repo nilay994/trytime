@@ -15,5 +15,5 @@
         </struct>
         <variable name = "heading" type = "float"/>
     </struct>
-    <variable name = "frame_type" type = "uint8_t"/>
+    <variable name = "end_byte" type = "uint8_t"/>
 </struct>

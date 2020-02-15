@@ -4,6 +4,12 @@
 
 #include <stdint.h>
 
+void strptrtest(uint8_t* strs) {
+	char* teststr = "mavlab test\n";
+	memcpy(strs, teststr, sizeof(teststr));
+}
+
+
 int main() {
 
 	/*
@@ -89,7 +95,8 @@ int main() {
 	// char tmp = '0' + mode;
 	printf("%x", mode);
 
-
-
+	uint8_t str[50] = {0};
+	strptrtest(str);
+	printf("\n str: %s\n", str);
 	return 0;
 }
