@@ -116,7 +116,9 @@ uint8_t packet2struct(uart_packet_t* uart_packet, uint8_t *s) {
 
 void main() {
 
-    printf("size of typedef: %ld B\n", sizeof(uart_packet_t));
+    printf("size of uart_packet_t: %ld B\n", sizeof(uart_packet_t));
+
+    printf("size of fragged_packet_t: %ld B\n", sizeof(fragged_packet_t));
 
     uart_packet_t uart_packet = {
         .start_byte = 100,
@@ -133,6 +135,11 @@ void main() {
         },
         .end_byte = 5,
     };
+
+    char str[6] = {0xA2, 0x12, 0x12, 0x12, 0x12, 0x40};
+    fragged_packet_t fragged_packet;
+    memcpy(&fragged_packet, str, sizeof(fragged_packet_t));
+    printf("nibble1: 0x%02x, nibble2: 0x%02x, float: %f, byte: %d\n", fragged_packet.nibble1, fragged_packet.nibble2, (float) fragged_packet.floatval, fragged_packet.charval);
 
     //char str[21] = {0x64,0x02,0x03,0x04,0xc7,0x0b,0xe3,0x42,0x00,0x80,0x54,0x43,0x00,0x26,0x1c,0xc6,0x00,0x00,0x80,0x3f,0x05};
 

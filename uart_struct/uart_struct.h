@@ -47,4 +47,11 @@ typedef struct {
     uint8_t end_byte;
 } uart_packet_t;
 
-// __attribute__((packed));
+typedef struct __attribute__((packed)) {
+    uint8_t nibble1: 4;
+    uint8_t nibble2: 4;
+    uint32_t floatval;
+    uint8_t charval;
+} fragged_packet_t;
+
+//__attribute__((packed));
