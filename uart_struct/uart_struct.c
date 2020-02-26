@@ -141,6 +141,14 @@ void main() {
     memcpy(&fragged_packet, str, sizeof(fragged_packet_t));
     printf("nibble1: 0x%02x, nibble2: 0x%02x, float: %f, byte: %d\n", fragged_packet.nibble1, fragged_packet.nibble2, (float) fragged_packet.floatval, fragged_packet.charval);
 
+    unsigned char str2[6] = {0};
+    memcpy(&str2, &fragged_packet, sizeof(fragged_packet_t));
+    printf("\n{");
+    for (int i = 0; i < sizeof(fragged_packet_t); i++) {
+        printf("0x%02x,", str2[i]);
+    }
+    printf("}\n");
+
     //char str[21] = {0x64,0x02,0x03,0x04,0xc7,0x0b,0xe3,0x42,0x00,0x80,0x54,0x43,0x00,0x26,0x1c,0xc6,0x00,0x00,0x80,0x3f,0x05};
 
     char s[MAX_LENGTH] = {0};
