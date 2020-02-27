@@ -130,8 +130,15 @@ void Ransac::ransac_correct() {
                 subset_b_matrix.row(j) = b_matrix.row(indices_subset[j]);
                 subset_a_matrix.row(j) = a_matrix.row(indices_subset[j]);
             }
+
             // calculate the params using least squares
-            subset_params = (subset_a_matrix.transpose()*subset_a_matrix).ldlt().solve(subset_a_matrix.transpose()*subset_b_matrix);
+            //subset_params = (subset_a_matrix.transpose()*subset_a_matrix).ldlt().solve(subset_a_matrix.transpose()*subset_b_matrix);
+
+            // instead use svd. in case of Ax = 0; x is orthogonal to the space of A. Find the column of the right singular vector, 
+            // whose corresponding singular value is the smallest - the last column of the decomposed matrix v. use jacobi for small and bcd for larger
+            Eigen::JacobiSVD<Eigen::MatrixXd> svd(subset_a_matrix, Eigen::ComputeThinU | Eigen::ComputeThinV);
+            // pick the last column of right singular matrix as orthogonal vector
+            subset_params = svd.matrixV().col(RANSAC_A_WIDTH);
 
             // calculate the residual after least squares
             residual = subset_a_matrix*subset_params - subset_b_matrix; // where, b = 0;
