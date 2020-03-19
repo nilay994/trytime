@@ -3,9 +3,9 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-MAX_VEL = 10
+MAX_VEL = 20
 MAX_DIST = 25
-RR = 2
+RR = 4
 MAX_ROBOTS = 3
 
 def config_matplotlib():
@@ -110,9 +110,7 @@ def detect2(robot_obj_list):
     print(np.round(dcpa,2))
     print('----------------------')
     # n x n symmetric matrix is now populated 
-    
-            
-        
+
 # def resolve(robot_obj_list, occupancy_map):
 
 # hacky direct version
@@ -126,8 +124,9 @@ def detect(robot_a, robot_b):
     dcpa = (abs((np.linalg.norm(drel)**2) - ((tcpa ** 2) * (np.linalg.norm(vrel)**2)))) ** (1./2)
     if (tcpa > 0) and (dcpa < 0.5):
         newvela = resolve(robot_a, robot_b)
-        robot_a.vel, robot_a.head = cart2polar(newvela)
-        print (robot_a.vel, np.rad2deg(robot_a.head))
+        avel, robot_a.head = cart2polar(newvela)
+        robot_a.vel = np.clip(avel, -2, 2)
+        # print (robot_a.vel, np.rad2deg(robot_a.head))
     else: 
         robot_a.vel = robot_a.oldvel
         robot_a.head = robot_a.oldhead
@@ -136,21 +135,30 @@ def detect(robot_a, robot_b):
 
 def project(robot_a, angle1, angle2, centre):
     
-    vela = polar2cart(robot_a.vel, robot_a.head)
+    #  body frame to world frame velocity
+    vela = robot_a.pos + polar2cart(robot_a.vel, robot_a.head)
 
-    yintercept = centre[1] - angle1 * centre[0]
-    # projection is the x-coordinate itself
-    if angle1 == 0:
-        newvela = np.array([va[0], 0])
+    yintercept = centre[1] - (np.tan(angle1) * centre[0])
+    # if slope is zero, projection is the x-coordinate itself
+    if np.tan(angle1) == 0:
+        newvela = np.array([vela[0], 0])
         return newvela
     else:
-        xintercept = yintercept / angle1
+        xintercept = - yintercept / np.tan(angle1)
 
     # slope point to slope intercept
     # x_intercept = 3, y intercept = 1.5, slope = -0.5
     # line_prop = [3, 1.5, -0.5]
-    line_prop = [xintercept, yintercept, angle1]
-    
+    line_prop = [xintercept, yintercept, np.tan(angle1)]
+
+    # # slope - intercept form, poly1d(m, c)
+    # line1 = np.poly1d([line_prop[2], line_prop[1]])
+
+    # # plot the line
+    # x_ax = np.linspace(-10, 10, 10)
+    # y_ax = line1(x_ax)
+    # plt.plot(x_ax, y_ax)
+
     # slope - intercept form, poly1d(m, c)
     line1 = np.poly1d([line_prop[2], line_prop[1]])
 
@@ -158,16 +166,19 @@ def project(robot_a, angle1, angle2, centre):
     vector_from_line = np.array([line_prop[0], -line_prop[1]])
     if (np.inner(vector_from_line, vector_from_line) > 0.1):
         # calculate projection matrix
+        # projection matrix P**2 = P
         P = np.outer(vector_from_line, vector_from_line)/np.inner(vector_from_line, vector_from_line)
     else: 
-        newvela = vela
+        # back to body frame velocity
+        newvela = vela - robot_a.pos
         return newvela
-    # print(P)
-    # projection matrix P**2 = P
-    # print(P.dot(P))
     
-    projected_pt = P.dot(vela + robot_a.pos - np.array([0, line_prop[1]]))
+    projected_pt = P.dot(vela - np.array([0, line_prop[1]])) + np.array([0, line_prop[1]])
     newvela = projected_pt
+    plt.plot(newvela[0], newvela[1], 'or', alpha=0.2)
+
+    # back to body frame velocities
+    newvela = newvela - robot_a.pos
 
     return newvela
 
@@ -177,12 +188,22 @@ def resolve(robot_a, robot_b):
     angleb = np.arctan2(robot_b.pos[1], robot_b.pos[0])
     # do atan dist here
     deltad = np.linalg.norm(robot_a.pos - robot_b.pos)
-    angleb1 = angleb + np.arctan(RR/deltad)
-    angleb2 = angleb - np.arctan(RR/deltad)
+    angleb1 = angleb - np.arctan(RR/deltad)
+    angleb2 = angleb + np.arctan(RR/deltad)
     # centre of collision cone
-    centre = robot_a.pos + robot_b.pos
+
+    centre = robot_a.pos + polar2cart(robot_b.vel, robot_b.head)
+    # plot cc
+    pt1 = centre
+    pt2 = centre + np.array([(MAX_VEL * np.cos(angleb1)), (MAX_VEL * np.sin(angleb1))])
+    pt3 = centre + np.array([(MAX_VEL * np.cos(angleb2)), (MAX_VEL * np.sin(angleb2))])
+    plt.plot([pt2[0], pt1[0], pt3[0]], [pt2[1], pt1[1], pt3[1]], '-o', color='gray', alpha=0.2)
     
-    newvela = project(robot_a, angleb1, angleb2, centre)
+    oldvela = robot_a.pos + polar2cart(robot_a.vel, robot_a.head)
+    plt.plot(oldvela[0], oldvela[1], 'og', alpha=0.2)
+    
+    newvela = project(robot_a, angleb1, angleb2, centre)   
+
     return newvela
 
 robot_obj_list = []
@@ -194,8 +215,8 @@ def main():
     plt.grid(True, which='minor', color=gray, linestyle = '--', linewidth = 0.5)
     plt.minorticks_on()
     plt.axis('equal')
-    plt.xlim(-30, 30)
-    plt.ylim(-30, 30)
+    plt.xlim(-15, 15)
+    plt.ylim(-15, 15)
 
     robot_a = robot(np.array([7.0, 0.0]), 2, np.deg2rad(135))
     robot_b = robot(np.array([-7.0, 0.0]), 2, np.deg2rad(45))
@@ -203,7 +224,8 @@ def main():
     robot_obj_list.append(robot_a)
     robot_obj_list.append(robot_b)
 
-    for i in range(80):
+    cnt = 0
+    for i in range(35):
         # plt.cla()
         detect(robot_a, robot_b)
         # detect2(robot_obj_list)
@@ -213,7 +235,13 @@ def main():
         robot_a.draw(plt)
         robot_b.draw(plt)
         plt.plot()
+        filename = 'logs/velobs%02d.png' % cnt
+        cnt = cnt + 1
+        plt.savefig(filename)
         plt.pause(0.1)
-
+        # q = input('keypress to end')
+        # if q != 'c':
+        #     break
+    
 if __name__ == "__main__":
     main()
