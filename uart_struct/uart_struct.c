@@ -6,45 +6,45 @@
 
 /* return length of packet */
 uint8_t struct2packet(uart_packet_t uart_packet, uint8_t* s) {
-    
+
     uint8_t i = 0;
-    
+
     s[i] = uart_packet.start_byte; // 0
-    i = i + sizeof(uart_packet.start_byte); 
+    i = i + sizeof(uart_packet.start_byte);
 
     s[i] = uart_packet.source_id;  // 1
-    i = i + sizeof(uart_packet.source_id); 
+    i = i + sizeof(uart_packet.source_id);
 
     s[i] = uart_packet.destination_id; // 2
     i = i + sizeof(uart_packet.destination_id);
-    
+
     s[i] = uart_packet.frame_type;  // 3
     i = i + sizeof(uart_packet.frame_type);
-    
+
     // opened up struct, point to highest in the array while ieee754 memcpy of float
     // caution: little-endian
-    memcpy(&s[i], &uart_packet.drone_state.pos.x, 
+    memcpy(&s[i], &uart_packet.drone_state.pos.x,
             sizeof(uart_packet.drone_state.pos.x)); // 4-7 (7 is MSB)
-    i = i + sizeof(uart_packet.drone_state.pos.x); 
-    
-    memcpy(&s[i], &uart_packet.drone_state.pos.y, 
+    i = i + sizeof(uart_packet.drone_state.pos.x);
+
+    memcpy(&s[i], &uart_packet.drone_state.pos.y,
             sizeof(uart_packet.drone_state.pos.y)); // 8-11 (11 is MSB)
-    i = i + sizeof(uart_packet.drone_state.pos.y); 
+    i = i + sizeof(uart_packet.drone_state.pos.y);
 
-    memcpy(&s[i], &uart_packet.drone_state.pos.z, 
+    memcpy(&s[i], &uart_packet.drone_state.pos.z,
             sizeof(uart_packet.drone_state.pos.z)); // 12-15 (15 is MSB)
-    i = i + sizeof(uart_packet.drone_state.pos.z); 
+    i = i + sizeof(uart_packet.drone_state.pos.z);
 
 
-    memcpy(&s[i], &uart_packet.drone_state.heading, 
-            sizeof(uart_packet.drone_state.heading)); // 16-19 (19 is MSB) 
-    i = i + sizeof(uart_packet.drone_state.heading); 
+    memcpy(&s[i], &uart_packet.drone_state.heading,
+            sizeof(uart_packet.drone_state.heading)); // 16-19 (19 is MSB)
+    i = i + sizeof(uart_packet.drone_state.heading);
 
     s[i] = uart_packet.end_byte; // 20
     i = i + sizeof(uart_packet.end_byte);
 
     // TODO: append crc or terminate
-    
+
     #ifdef DEBUG
         printf("Packet:{");
         for (int cnt = 0; cnt < UNPADDED_LENGTH; cnt++) {
