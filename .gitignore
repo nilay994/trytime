@@ -1,2 +1,4 @@
 *.a
 *.out
+uart_struct/build
+*.vscode
