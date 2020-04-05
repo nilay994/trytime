@@ -5,6 +5,7 @@
     One of the simple approaches might be typecasting but keep an eye on the byte order. A stupid solution might be creating an union between a float and an array of 4 bytes. You can use both notations and perform any order swap you want in a very easy way. 
 */
 
+#pragma once 
 
 #include <stdint.h>
 
@@ -53,5 +54,14 @@ typedef struct __attribute__((packed)) {
     uint32_t floatval;
     uint8_t charval;
 } fragged_packet_t;
+
+typedef struct __attribute__((packed)) {
+  float pot;
+  uint8_t but0:1;
+  uint8_t but1:1;
+  uint8_t but2:1;
+  uint8_t but3:1;
+  uint8_t but4:1;
+} input_dev_t;
 
 //__attribute__((packed));
