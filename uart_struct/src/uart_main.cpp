@@ -5,6 +5,8 @@
 #include "uart_struct.h"
 #include "uart_driver.h"
 
+// sudo gtkterm -b 8 -t 1 -s 115200 -p /dev/ttyTHS2
+
 int main(int agv, char** argv) {
 
     SerialPort *obj = new SerialPort("/dev/ttyUSB0");
