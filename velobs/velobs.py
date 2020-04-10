@@ -1,5 +1,4 @@
 # pseudo code: simulate basic velocity obstacle for 2 robots only
-# use the drel trel analogy to predict whether any collision is possible
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -108,8 +107,19 @@ def project(robot_a, angle2, angle1, centre):
         return newvela
     else:
         xintercept = - yintercept / np.tan(angle1)
-        
+
+    # slope point to slope intercept
+    # x_intercept = 3, y intercept = 1.5, slope = -0.5
+    # line_prop = [3, 1.5, -0.5]
     line_prop = [xintercept, yintercept, np.tan(angle1)]
+
+    # # slope - intercept form, poly1d(m, c)
+    # line1 = np.poly1d([line_prop[2], line_prop[1]])
+
+    # # plot the line
+    # x_ax = np.linspace(-10, 10, 10)
+    # y_ax = line1(x_ax)
+    # plt.plot(x_ax, y_ax)
 
     # slope - intercept form, poly1d(m, c)
     line1 = np.poly1d([line_prop[2], line_prop[1]])
