@@ -1,5 +1,5 @@
 # pseudo code: simulate basic velocity obstacle for 2 robots only
-# use the drel trel analogy to predict whether any collision is possible
+# use collision cones to see whether velocity of current robot is in the cc
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -59,42 +59,38 @@ class robot:
         # ax.add_artist(rad)
         plt.quiver(*originpt, dx, dy, scale = 10)
 
-# hacky direct version
-def detect(robot1, robot2):
-    drel = robot1.pos - robot2.pos
-    vrel = polar2cart(robot1.vel, robot1.head) - polar2cart(robot2.vel, robot2.head)
-    norm_vrel = np.linalg.norm(vrel)
-    if norm_vrel < 0.1:
-        norm_vrel = 0.1
-    tcpa = - np.inner(drel, vrel) / (norm_vrel**2)
-    dcpa = (abs((np.linalg.norm(drel)**2) - ((tcpa ** 2) * (np.linalg.norm(vrel)**2)))) ** (1./2)
 
-    angleb = np.arctan2(robot2.pos[1], robot2.pos[0])
+def detect_cc_version(robot_a, robot_b):
+    # build solution space diagram
+    # find angle of b in world frame
+    angleb = np.arctan2(robot_b.pos[1], robot_b.pos[0])
     # do atan dist here
-    deltad = np.linalg.norm(robot1.pos - robot2.pos)
+    deltad = np.linalg.norm(robot_a.pos - robot_b.pos)
     angleb1 = angleb - np.arctan(RR/deltad)
     angleb2 = angleb + np.arctan(RR/deltad)
 
-    centre = robot1.pos + polar2cart(robot2.vel, robot2.head)
+    centre = robot_a.pos + polar2cart(robot_b.vel, robot_b.head)
+    # plot cc
     pt1 = centre
     pt2 = centre + np.array([(MAX_VEL * np.cos(angleb1)), (MAX_VEL * np.sin(angleb1))])
     pt3 = centre + np.array([(MAX_VEL * np.cos(angleb2)), (MAX_VEL * np.sin(angleb2))])
     plt.plot([pt2[0], pt1[0], pt3[0]], [pt2[1], pt1[1], pt3[1]], '-o', color='gray', alpha=0.2)
-    
-    oldvel = robot1.pos + polar2cart(robot1.vel, robot1.head)
-    plt.plot(oldvel[0], oldvel[1], 'or', alpha=0.2)
-    
-    print(tcpa, dcpa)
-    if (tcpa > 0) and ((dcpa) < RR):
-        newvel = resolve(robot1, robot2)
-        avel, robot1.head = cart2polar(newvel)
-        robot1.vel = np.clip(avel, -3, 3)
-        # print (robot_a.vel, np.rad2deg(robot_a.head))
-    else: 
-        robot1.vel = robot1.oldvel
-        robot1.head = robot1.oldhead
-#     print(round(tcpa, 2), round(dcpa, 2))
 
+    currvela = robot_a.pos + polar2cart(robot_a.vel, robot_a.head)
+    plt.plot(currvela[0], currvela[1], 'or', alpha=0.2)
+
+    checkpt = currvela - centre
+    mag, ang = cart2polar(checkpt)
+    # blah = np.array([np.rad2deg(angleb1), np.rad2deg(ang), np.rad2deg(angleb2)])
+    # print(np.round(blah,2))
+
+    if ((angleb1 < ang) & (ang < angleb2)):
+        newvela = resolve(robot_a, robot_b)
+        avel, robot_a.head = cart2polar(newvela)
+        robot_a.vel = np.clip(avel, -2, 2)
+    else:
+        robot_a.vel = robot_a.oldvel
+        robot_a.head = robot_a.oldhead
 
 def project(robot_a, angle2, angle1, centre):
     
@@ -108,8 +104,19 @@ def project(robot_a, angle2, angle1, centre):
         return newvela
     else:
         xintercept = - yintercept / np.tan(angle1)
-        
+
+    # slope point to slope intercept
+    # x_intercept = 3, y intercept = 1.5, slope = -0.5
+    # line_prop = [3, 1.5, -0.5]
     line_prop = [xintercept, yintercept, np.tan(angle1)]
+
+    # # slope - intercept form, poly1d(m, c)
+    # line1 = np.poly1d([line_prop[2], line_prop[1]])
+
+    # # plot the line
+    # x_ax = np.linspace(-10, 10, 10)
+    # y_ax = line1(x_ax)
+    # plt.plot(x_ax, y_ax)
 
     # slope - intercept form, poly1d(m, c)
     line1 = np.poly1d([line_prop[2], line_prop[1]])
@@ -134,21 +141,21 @@ def project(robot_a, angle2, angle1, centre):
 
     return newvela
 
-def resolve(robot1, robot2):
+def resolve(robot_a, robot_b):
     # build solution space diagram
     # find angle of b in world frame
-    angleb = np.arctan2(robot2.pos[1], robot2.pos[0])
+    angleb = np.arctan2(robot_b.pos[1], robot_b.pos[0])
     # do atan dist here
-    deltad = np.linalg.norm(robot1.pos - robot2.pos)
+    deltad = np.linalg.norm(robot_a.pos - robot_b.pos)
     angleb1 = angleb - np.arctan(RR/deltad)
     angleb2 = angleb + np.arctan(RR/deltad)
     # centre of collision cone
 
-    centre = robot1.pos + polar2cart(robot2.vel, robot2.head)
-    oldvel = robot1.pos + polar2cart(robot1.vel, robot1.head)
-    newvel = project(robot1, angleb1, angleb2, centre)   
+    centre = robot_a.pos + polar2cart(robot_b.vel, robot_b.head)
+    oldvela = robot_a.pos + polar2cart(robot_a.vel, robot_a.head)
+    newvela = project(robot_a, angleb1, angleb2, centre)   
 
-    return newvel
+    return newvela
 
 robot_obj_list = []
 def main():
@@ -171,8 +178,8 @@ def main():
     cnt = 0
     for i in range(35):
         # plt.cla()
-        detect(robot_a, robot_b)
-        detect(robot_b, robot_a)
+        detect_cc_version(robot_a, robot_b)
+        # detect(robot_a, robot_b)
         plt.plot(block = 'False')
         robot_a.move()
         robot_b.move()
