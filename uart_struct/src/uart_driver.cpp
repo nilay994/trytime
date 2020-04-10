@@ -10,13 +10,16 @@
 #include <unistd.h>
 #include <iostream>
 #include <string.h>
+#include <uart_struct.h>
 
+input_dev_t input_dev;
 
 SerialPort::SerialPort(const std::string &port)
 	: receiver_thread_(),
 	  receiver_thread_should_exit_(false),
 	  serial_port_fd_(-1) {
-
+	
+	valid_uart_message_received = false;
 	if (!connectSerialPort(port)) {
 		std::cout << "[ERR] can't connect to port" << std::endl;
 	}
@@ -173,6 +176,9 @@ void SerialPort::serialPortReceiveThread() {
 							bytes_buf.pop_front();
 							// printf("0x%02x,", uart_msg_bytes[i]);
 						}
+						memcpy(&input_dev, &(this->uart_msg_bytes[1]), FRAMELEN);
+            			// std::cout << "val: " << input_dev.pot << std::endl;
+						
 						// std::cout << "works" << std::endl;
 						valid_uart_message_received = true;
 					} else {
