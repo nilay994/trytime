@@ -1,6 +1,10 @@
 // maybe use deque only when multiple consumers
 // #include <deque>
 
+/*  decide what is more important: either getting current deep copy of data or 
+   	missed push to the queue, but if your own thread runs slow, it could overflow the queue, 
+	leading to unsuccessful spsc push... */
+
 #include <iostream>
 #include <stdint.h>
 #include <thread>
@@ -15,7 +19,7 @@ struct uart_buffer {
 };
 
 // global queue
-boost::lockfree::spsc_queue<uart_buffer, boost::lockfree::capacity<8>> _buffer_queue;
+boost::lockfree::spsc_queue<uart_buffer, boost::lockfree::capacity<8192>> _buffer_queue;
 
 void producer() {
 	uart_buffer buffer_data;
@@ -26,12 +30,13 @@ void producer() {
 		
 		if (!_buffer_queue.push(buffer_data)) {
 			std::cout << "[err] producer failed to push buffer data" << std::endl;
+			_buffer_queue.reset();
 		}
 
 		std::cout << "producer: write available: " << _buffer_queue.write_available() << std::endl;
 		
 		// also print the queue?
-		std::this_thread::sleep_for(std::chrono::milliseconds(500));
+		std::this_thread::sleep_for(std::chrono::microseconds(8));
 	}
 }
 
@@ -45,7 +50,7 @@ void consumer() {
 		std::cout << "consumer: read available: " << _buffer_queue.read_available() << std::endl;
 
 		std::cout << "val1: " << buffer_data.val1 << std::endl;
-		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+		std::this_thread::sleep_for(std::chrono::milliseconds(2));
 	}
 
 }
