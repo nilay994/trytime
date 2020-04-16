@@ -1,12 +1,13 @@
 # pseudo code: simulate basic velocity obstacle for 2 robots only
 # use the drel trel analogy to predict whether any collision is possible
-
+# this script hence wouldn't only go to collision avoidance mode when self vel is in collision cone
+# it would also go to collision avoidance more when tcpa and dcpa are unsafe
 import matplotlib.pyplot as plt
 import numpy as np
 
 MAX_VEL = 20
 MAX_DIST = 25
-RR = 1
+RR = 5
 MAX_ROBOTS = 3
 
 def config_matplotlib():
@@ -36,7 +37,10 @@ def polar2cart(mag, direction):
     cart = np.array([x, y])
     return cart
 
+
 class robot:
+    
+
     def __init__(self, pos, vel, head):
         self.pos = pos
         self.vel = vel
@@ -44,20 +48,40 @@ class robot:
         # create copies for after conflict resolution
         self.oldvel = vel
         self.oldhead = head
+        self.firstRun = True
 
     def move(self):
-        [delx, dely] = polar2cart(self.vel*0.2, self.head)
+        # [TODO] to get sizeable plots, scale vel
+        [delx, dely] = polar2cart(self.vel, self.head)
         self.pos[0] += delx
         self.pos[1] += dely
 
     def draw(self, plt):
-        dx, dy = polar2cart(self.vel/20, self.head)
+        dx, dy = polar2cart(self.vel/2, self.head)
         originpt = self.pos[0], self.pos[1]
+        # global firstRun
+        global qv
+
+        if (self.firstRun):
+            qv = plt.quiver(*originpt, dx, dy, scale = 10)
+            qv.set_color('black')
+            qv.set_alpha('1')
+            self.firstRun=False
+            print("first.......")
+        
+        if (self.firstRun==False):
+            qv.set_color('black')
+            qv.set_alpha('0.2')
+            qv = plt.quiver(*originpt, dx, dy, scale = 10)
+            qv.set_color('black')
+            qv.set_alpha('1')
+
         # print (originpt)
         # rad = plt.Circle((self.pos[0], self.pos[1]), RR, color='r', alpha = 0.1)
         # ax = plt.gca()
         # ax.add_artist(rad)
-        plt.quiver(*originpt, dx, dy, scale = 10)
+
+
 
 # hacky direct version
 def detect(robot1, robot2):
@@ -69,9 +93,11 @@ def detect(robot1, robot2):
     tcpa = - np.inner(drel, vrel) / (norm_vrel**2)
     dcpa = (abs((np.linalg.norm(drel)**2) - ((tcpa ** 2) * (np.linalg.norm(vrel)**2)))) ** (1./2)
 
+    # print(round(tcpa, 2), round(dcpa, 2))
+
     angleb = np.arctan2(robot2.pos[1], robot2.pos[0])
     # do atan dist here
-    deltad = np.linalg.norm(robot1.pos - robot2.pos)
+    deltad = np.linalg.norm(drel)
     angleb1 = angleb - np.arctan(RR/deltad)
     angleb2 = angleb + np.arctan(RR/deltad)
 
@@ -83,20 +109,18 @@ def detect(robot1, robot2):
     
     oldvel = robot1.pos + polar2cart(robot1.vel, robot1.head)
     plt.plot(oldvel[0], oldvel[1], 'or', alpha=0.2)
-    
-    print(tcpa, dcpa)
-    if (tcpa > 0) and ((dcpa) < RR):
-        newvel = resolve(robot1, robot2)
+
+    if ((tcpa > 0) and (dcpa < RR)):
+        newvel = vo_resolve_by_project(robot1, angleb1, angleb2, centre)
         avel, robot1.head = cart2polar(newvel)
-        robot1.vel = np.clip(avel, -3, 3)
+        robot1.vel = np.clip(avel, -3.0, 3.0)
         # print (robot_a.vel, np.rad2deg(robot_a.head))
     else: 
         robot1.vel = robot1.oldvel
         robot1.head = robot1.oldhead
-#     print(round(tcpa, 2), round(dcpa, 2))
 
 
-def project(robot_a, angle2, angle1, centre):
+def vo_resolve_by_project(robot_a, angle1, angle2, centre):
     
     #  body frame to world frame velocity
     vela = robot_a.pos + polar2cart(robot_a.vel, robot_a.head)
@@ -104,7 +128,7 @@ def project(robot_a, angle2, angle1, centre):
     yintercept = centre[1] - (np.tan(angle1) * centre[0])
     # if slope is zero, projection is the x-coordinate itself
     if np.tan(angle2) == 0:
-        newvela = np.array([vela[0], 0])
+        newvela = np.array([vela[0], 0]) - robot_a.pos
         return newvela
     else:
         xintercept = - yintercept / np.tan(angle1)
@@ -120,35 +144,17 @@ def project(robot_a, angle2, angle1, centre):
         # calculate projection matrix
         # projection matrix P**2 = P
         P = np.outer(vector_from_line, vector_from_line)/np.inner(vector_from_line, vector_from_line)
+
+        projected_pt = P.dot(vela - np.array([0, line_prop[1]])) + np.array([0, line_prop[1]])
+        newvela = projected_pt
+        plt.plot(newvela[0], newvela[1], 'og', alpha=0.2)
+        # back to body frame velocities
+        newvela = newvela - robot_a.pos
+        return newvela
     else: 
         # back to body frame velocity
         newvela = vela - robot_a.pos
         return newvela
-    
-    projected_pt = P.dot(vela - np.array([0, line_prop[1]])) + np.array([0, line_prop[1]])
-    newvela = projected_pt
-    plt.plot(newvela[0], newvela[1], 'og', alpha=0.2)
-
-    # back to body frame velocities
-    newvela = newvela - robot_a.pos
-
-    return newvela
-
-def resolve(robot1, robot2):
-    # build solution space diagram
-    # find angle of b in world frame
-    angleb = np.arctan2(robot2.pos[1], robot2.pos[0])
-    # do atan dist here
-    deltad = np.linalg.norm(robot1.pos - robot2.pos)
-    angleb1 = angleb - np.arctan(RR/deltad)
-    angleb2 = angleb + np.arctan(RR/deltad)
-    # centre of collision cone
-
-    centre = robot1.pos + polar2cart(robot2.vel, robot2.head)
-    oldvel = robot1.pos + polar2cart(robot1.vel, robot1.head)
-    newvel = project(robot1, angleb1, angleb2, centre)   
-
-    return newvel
 
 robot_obj_list = []
 def main():
@@ -162,8 +168,8 @@ def main():
     plt.xlim(-15, 15)
     plt.ylim(-15, 15)
 
-    robot_a = robot(np.array([-3.0, -3.0]), 2, np.deg2rad(45))
-    robot_b = robot(np.array([3.0, 3.0]), 2, np.deg2rad(-135))
+    robot_a = robot(np.array([-7.0, 0.0]), 0.4, np.deg2rad(40.0))
+    robot_b = robot(np.array([7.0, 0.0]), 0.4, np.deg2rad(150.0))
     
     robot_obj_list.append(robot_a)
     robot_obj_list.append(robot_b)
@@ -172,7 +178,7 @@ def main():
     for i in range(35):
         # plt.cla()
         detect(robot_a, robot_b)
-        detect(robot_b, robot_a)
+        # detect(robot_b, robot_a)
         plt.plot(block = 'False')
         robot_a.move()
         robot_b.move()
@@ -182,7 +188,7 @@ def main():
         filename = 'logs/velobs%02d.png' % cnt
         cnt = cnt + 1
         plt.savefig(filename)
-        plt.pause(0.1)
+        plt.pause(1)
         # q = input('keypress to end')
         # if q != 'c':
         #     break
