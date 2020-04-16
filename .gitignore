@@ -3,5 +3,5 @@
 uart_struct/build
 *.vscode
 spsc_try/build
-velobs/misc
+velobs/misc/pprzdata*
 velobs/logs
