@@ -37,23 +37,21 @@ class robot:
         if (self.firstRun):
             qv = plt.quiver(*originpt, dx, dy, scale = 10)
             qv.set_color('black')
-            qv.set_alpha('1')
+            qv.set_alpha(0.9)
             self.firstRun=False
             print("first.......")
         
         if (self.firstRun==False):
             qv.set_color('black')
-            qv.set_alpha('0.2')
+            qv.set_alpha(1.0)
             qv = plt.quiver(*originpt, dx, dy, scale = 10)
             qv.set_color('black')
-            qv.set_alpha('1')
+            qv.set_alpha(1.0)
 
         # print (originpt)
         # rad = plt.Circle((self.pos[0], self.pos[1]), RR, color='r', alpha = 0.1)
         # ax = plt.gca()
         # ax.add_artist(rad)
-
-
 
 def main():
     data = genfromtxt('pprzdata.txt', delimiter=',')
