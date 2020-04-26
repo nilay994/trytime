@@ -1,7 +1,8 @@
 *.a
 *.out
+*.txt
+*.csv
 uart_struct/build
 *.vscode
 spsc_try/build
-velobs/misc/pprzdata*
 velobs/logs

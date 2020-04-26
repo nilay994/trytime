@@ -19,7 +19,7 @@ def config_matplotlib():
 
 
 def main():
-    data = genfromtxt('pprzdata.txt', delimiter=',')
+    data = genfromtxt('drone_data.csv', delimiter=',')
     config_matplotlib()
     plt.minorticks_on()
     plt.axis('equal')
@@ -27,6 +27,9 @@ def main():
     for i in range(np.size(data,0)):
         plt.plot(data[i,0], data[i,1], '.r')
         plt.plot(data[i,4], data[i,5], '.b')
+        print(np.round([data[i, 0], data[i, 1], data[i, 2], data[i, 3]], 3), end =" ")
+        print("|", end =" ")
+        print(np.round([data[i, 4], data[i, 5], data[i, 6], data[i, 7]], 3))
         plt.xlim([-40, 40])
         plt.ylim([-40, 40])
         plt.grid('True')

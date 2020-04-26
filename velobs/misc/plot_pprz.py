@@ -54,7 +54,7 @@ class robot:
         # ax.add_artist(rad)
 
 def main():
-    data = genfromtxt('pprzdata.txt', delimiter=',')
+    data = genfromtxt('drone_data.csv', delimiter=',')
     print(data[0, 0:1])
     robota = robot(data[0, [0,1]], data[0, 2], data[0, 3])
     robotb = robot(data[0, [4,5]], data[0, 6], data[0, 7])
@@ -69,6 +69,9 @@ def main():
         plt.grid('True')
         robota.draw(data[i, [0,1]], data[i, 2], data[i, 3], plt)
         robotb.draw(data[i, [4,5]], data[i, 6], data[i, 7], plt)
+        print(np.round([data[i, 0], data[i, 1], data[i, 2], data[i, 3]], 3), end =" ")
+        print("|", end =" ")
+        print(np.round([data[i, 4], data[i, 5], data[i, 6], data[i, 7]], 3))
         plt.pause(0.1)
     plt.show()
 
