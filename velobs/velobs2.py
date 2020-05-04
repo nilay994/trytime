@@ -11,18 +11,18 @@ MAX_ROBOTS = 3
 
 def config_matplotlib():
     plt.rcParams['figure.figsize'] = (10, 8)
-    # gray = '444444'
+    gray = '444444'
     plt.rcParams['axes.facecolor'] = 'f5f5f5'
-    # plt.rcParams['axes.edgecolor'] = gray
+    plt.rcParams['axes.edgecolor'] = gray
     plt.rcParams['grid.linestyle'] = '-'
     plt.rcParams['grid.alpha'] = 0.8
     plt.rcParams['grid.color'] = 'white'
     plt.rcParams['grid.linewidth'] = 2
     plt.rcParams['axes.axisbelow'] = True
-    # plt.rcParams['axes.labelcolor'] = gray
-    # plt.rcParams['text.color'] = gray
-    # plt.rcParams['xtick.color'] = gray
-    # plt.rcParams['ytick.color'] = gray
+    plt.rcParams['axes.labelcolor'] = gray
+    plt.rcParams['text.color'] = gray
+    plt.rcParams['xtick.color'] = gray
+    plt.rcParams['ytick.color'] = gray
 
 def cart2polar(vel_vec):
     mag = np.linalg.norm(vel_vec)
@@ -77,8 +77,6 @@ class robot:
         # ax = plt.gca()
         # ax.add_artist(rad)
 
-
-
 # hacky direct version
 def detect(robot1, robot2):
     drel = robot1.pos - robot2.pos
@@ -113,7 +111,7 @@ def detect(robot1, robot2):
     # [patchwork] collision cone widens just too much
     if ((tcpa > 0) and (dcpa < RR) and (deltad > 1.5 * RR)):
         # [patchwork] co-ordination problem solved by taking right (0.1)
-        if vrel_body[1]<= 0.1:
+        if vrel_body[1]<= 0.5:
             newvel = vo_resolve_by_project(robot1, angleb1, angleb2, centre)
         else:
             newvel = vo_resolve_by_project(robot1, angleb2, angleb1, centre)
@@ -164,17 +162,16 @@ def vo_resolve_by_project(robot_a, angle1, angle2, centre):
 robot_obj_list = []
 def main():
     config_matplotlib()
-    # gray = "444444"
     fig = plt.figure()
-    plt.grid(True, which='major')
+    plt.grid(True, which='major', color='gray', linestyle = '-', linewidth = 1)
     plt.grid(True, which='minor', color='gray', linestyle = '--', linewidth = 0.5)
     plt.minorticks_on()
     plt.axis('equal')
     plt.xlim(-15, 15)
     plt.ylim(-15, 15)
 
-    robot_a = robot(np.array([-10.0, -10.0]), 1, np.deg2rad(45.0))
-    robot_b = robot(np.array([10.0, -10.0]), 1, np.deg2rad(135.0))
+    robot_a = robot(np.array([-6.0, -6.0]), 0.2, np.deg2rad(45.0))
+    robot_b = robot(np.array([-15.0, -15.0]), 0.8, np.deg2rad(45.0))
     
     robot_obj_list.append(robot_a)
     robot_obj_list.append(robot_b)
@@ -203,8 +200,8 @@ def main():
         plt.plot()
         filename = 'logs/velobs%02d.png' % cnt
         cnt = cnt + 1
-        # plt.savefig(filename)
-        plt.pause(0.8)
+        plt.savefig(filename)
+        plt.pause(0.1)
         # q = input('keypress to end')
         # if q != 'c':
         #     break

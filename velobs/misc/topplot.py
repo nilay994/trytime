@@ -1,3 +1,5 @@
+# quick plot pprz values, use full plot if heading info
+
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy import genfromtxt
