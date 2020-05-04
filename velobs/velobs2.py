@@ -5,25 +5,24 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-MAX_VEL = 20
-MAX_DIST = 25
-RR = 5
+MAX_VEL = 20.0
+RR = 3.0
 MAX_ROBOTS = 3
 
 def config_matplotlib():
     plt.rcParams['figure.figsize'] = (10, 8)
-    gray = "444444"
+    # gray = '444444'
     plt.rcParams['axes.facecolor'] = 'f5f5f5'
-    plt.rcParams['axes.edgecolor'] = gray
+    # plt.rcParams['axes.edgecolor'] = gray
     plt.rcParams['grid.linestyle'] = '-'
     plt.rcParams['grid.alpha'] = 0.8
     plt.rcParams['grid.color'] = 'white'
     plt.rcParams['grid.linewidth'] = 2
     plt.rcParams['axes.axisbelow'] = True
-    plt.rcParams['axes.labelcolor'] = gray
-    plt.rcParams['text.color'] = gray
-    plt.rcParams['xtick.color'] = gray
-    plt.rcParams['ytick.color'] = gray
+    # plt.rcParams['axes.labelcolor'] = gray
+    # plt.rcParams['text.color'] = gray
+    # plt.rcParams['xtick.color'] = gray
+    # plt.rcParams['ytick.color'] = gray
 
 def cart2polar(vel_vec):
     mag = np.linalg.norm(vel_vec)
@@ -37,10 +36,7 @@ def polar2cart(mag, direction):
     cart = np.array([x, y])
     return cart
 
-
 class robot:
-    
-
     def __init__(self, pos, vel, head):
         self.pos = pos
         self.vel = vel
@@ -57,7 +53,7 @@ class robot:
         self.pos[1] += dely
 
     def draw(self, plt):
-        dx, dy = polar2cart(self.vel/2, self.head)
+        dx, dy = polar2cart(self.vel/10, self.head)
         originpt = self.pos[0], self.pos[1]
         # global firstRun
         global qv
@@ -65,16 +61,16 @@ class robot:
         if (self.firstRun):
             qv = plt.quiver(*originpt, dx, dy, scale = 10)
             qv.set_color('black')
-            qv.set_alpha('1')
+            qv.set_alpha(1.0)
             self.firstRun=False
-            print("first.......")
+            # print("first.......")
         
         if (self.firstRun==False):
             qv.set_color('black')
-            qv.set_alpha('0.2')
+            qv.set_alpha(0.2)
             qv = plt.quiver(*originpt, dx, dy, scale = 10)
             qv.set_color('black')
-            qv.set_alpha('1')
+            qv.set_alpha(1.0)
 
         # print (originpt)
         # rad = plt.Circle((self.pos[0], self.pos[1]), RR, color='r', alpha = 0.1)
@@ -87,16 +83,20 @@ class robot:
 def detect(robot1, robot2):
     drel = robot1.pos - robot2.pos
     vrel = polar2cart(robot1.vel, robot1.head) - polar2cart(robot2.vel, robot2.head)
+    
+    world2body = np.array([[np.cos(-robot1.head), -np.sin(-robot1.head)],[np.sin(-robot1.head), np.cos(-robot1.head)]])
+    vrel_body = np.dot(world2body, np.array([[vrel[0]], [vrel[1]]]))
+    
     norm_vrel = np.linalg.norm(vrel)
     if norm_vrel < 0.1:
         norm_vrel = 0.1
+    # collision time elapsed, negative value infers collision was expected in the past
     tcpa = - np.inner(drel, vrel) / (norm_vrel**2)
+    # distance between bots when collision is predicted
     dcpa = (abs((np.linalg.norm(drel)**2) - ((tcpa ** 2) * (np.linalg.norm(vrel)**2)))) ** (1./2)
 
     # print(round(tcpa, 2), round(dcpa, 2))
-
-    angleb = np.arctan2(robot2.pos[1], robot2.pos[0])
-    # do atan dist here
+    angleb = np.arctan2(robot2.pos[1]-robot1.pos[1], robot2.pos[0]-robot1.pos[0])
     deltad = np.linalg.norm(drel)
     angleb1 = angleb - np.arctan(RR/deltad)
     angleb2 = angleb + np.arctan(RR/deltad)
@@ -110,15 +110,20 @@ def detect(robot1, robot2):
     oldvel = robot1.pos + polar2cart(robot1.vel, robot1.head)
     plt.plot(oldvel[0], oldvel[1], 'or', alpha=0.2)
 
-    if ((tcpa > 0) and (dcpa < RR)):
-        newvel = vo_resolve_by_project(robot1, angleb1, angleb2, centre)
-        avel, robot1.head = cart2polar(newvel)
-        robot1.vel = np.clip(avel, -3.0, 3.0)
+    # [patchwork] collision cone widens just too much
+    if ((tcpa > 0) and (dcpa < RR) and (deltad > 1.5 * RR)):
+        # [patchwork] co-ordination problem solved by taking right (0.1)
+        if vrel_body[1]<= 0.1:
+            newvel = vo_resolve_by_project(robot1, angleb1, angleb2, centre)
+        else:
+            newvel = vo_resolve_by_project(robot1, angleb2, angleb1, centre)
+        
+        robot1.vel, robot1.head = cart2polar(newvel)
+        robot1.vel = np.clip(robot1.vel, -3.0, 3.0)
         # print (robot_a.vel, np.rad2deg(robot_a.head))
     else: 
         robot1.vel = robot1.oldvel
         robot1.head = robot1.oldhead
-
 
 def vo_resolve_by_project(robot_a, angle1, angle2, centre):
     
@@ -159,41 +164,51 @@ def vo_resolve_by_project(robot_a, angle1, angle2, centre):
 robot_obj_list = []
 def main():
     config_matplotlib()
-    gray = "444444"
+    # gray = "444444"
     fig = plt.figure()
     plt.grid(True, which='major')
-    plt.grid(True, which='minor', color=gray, linestyle = '--', linewidth = 0.5)
+    plt.grid(True, which='minor', color='gray', linestyle = '--', linewidth = 0.5)
     plt.minorticks_on()
     plt.axis('equal')
     plt.xlim(-15, 15)
     plt.ylim(-15, 15)
 
-    robot_a = robot(np.array([-7.0, 0.0]), 0.4, np.deg2rad(40.0))
-    robot_b = robot(np.array([7.0, 0.0]), 0.4, np.deg2rad(150.0))
+    robot_a = robot(np.array([-10.0, -10.0]), 1, np.deg2rad(45.0))
+    robot_b = robot(np.array([10.0, -10.0]), 1, np.deg2rad(135.0))
     
     robot_obj_list.append(robot_a)
     robot_obj_list.append(robot_b)
 
     cnt = 0
+    toggle = 0
     for i in range(35):
         # plt.cla()
-        detect(robot_a, robot_b)
+        
         # detect(robot_b, robot_a)
         plt.plot(block = 'False')
         robot_a.move()
         robot_b.move()
         robot_a.draw(plt)
         robot_b.draw(plt)
+
+        detect(robot_a, robot_b)
+
+        # if (abs(robot_b.pos[1]) > 7):
+        #     toggle = ~toggle
+        #     if toggle:
+        #         robot_b.head = np.deg2rad(135.0)
+        #     else:
+        #         robot_b.head = np.deg2rad(-45.0)
+
         plt.plot()
         filename = 'logs/velobs%02d.png' % cnt
         cnt = cnt + 1
-        plt.savefig(filename)
-        plt.pause(1)
+        # plt.savefig(filename)
+        plt.pause(0.8)
         # q = input('keypress to end')
         # if q != 'c':
         #     break
     plt.show()
-
 
 if __name__ == "__main__":
     main()
