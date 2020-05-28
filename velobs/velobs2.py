@@ -75,13 +75,21 @@ class robot:
         # ax = plt.gca()
         # ax.add_artist(rad)
 
+cnttrue = 0
+cntfalse = 0
 # hacky direct version
 def detect(robot1, robot2):
+    global cnttrue, cntfalse
     drel = robot1.pos - robot2.pos
     vrel = robot1.vel - robot2.vel
 
     norm_drel = np.linalg.norm(drel)    
     norm_vrel = np.linalg.norm(vrel)
+
+    # if too close, stop then are there, norm_vrel = measurement noise of GPS
+    if ((norm_drel < 0.75 * RR) and (norm_vrel < 2.0)):
+        robot1.vel[0] = np.clip(0, -MAX_VEL, MAX_VEL)
+        robot1.vel[1] = np.clip(0, -MAX_VEL, MAX_VEL)
 
     # TODO: if norm_drel is too far and norm_vrel is too small, then don't return false detect!
 
@@ -92,7 +100,7 @@ def detect(robot1, robot2):
     # distance between bots when collision is predicted
     dcpa = (abs((norm_drel**2) - ((tcpa ** 2) * (norm_vrel**2)))) ** (1.0/2)
 
-    print(round(tcpa, 2), round(dcpa, 2))
+    # print(round(tcpa, 2), round(dcpa, 2))
     angleb = np.arctan2(robot2.pos[1]-robot1.pos[1], robot2.pos[0]-robot1.pos[0])
     deltad = norm_drel
     angleb1 = angleb - np.arctan(RR/deltad)
@@ -111,8 +119,16 @@ def detect(robot1, robot2):
     # dcpa < RR: distance during collision
     # tcpa < 6: ignore distant future, evade if crash expected in a few (6) seconds 
     # deltad > RR condition avoids planning when collision cone is too wide
-    if ((tcpa > 0) and (tcpa < 6) and (dcpa < RR) and (deltad > RR)):
-        if (vrel[0]+0.5) >= (vrel[1]):
+    if ((tcpa > 0) and (tcpa < 20) and (dcpa < RR) and (deltad > RR)):
+        cnttrue = cnttrue + 1
+        cntfalse = 0
+    else:
+        cnttrue = 0
+        cntfalse = cntfalse + 1
+
+    # making-sure filter
+    if (cnttrue > 5):
+        if (vrel[0]+3.0) >= (vrel[1]):
             # [patch] co-ordination problem solved by forcing right
             newvel = vo_resolve_by_project(robot1, angleb1, angleb2, centre)
         else:
@@ -120,9 +136,10 @@ def detect(robot1, robot2):
         
         robot1.vel[0] = np.clip(newvel[0], -MAX_VEL, MAX_VEL)
         robot1.vel[1] = np.clip(newvel[1], -MAX_VEL, MAX_VEL)
-    else:
+    
+    if (cntfalse > 5):
         # WHAT!: How is initvel changing? It is only done in the constructor!!
-        print(robot1.initvel)
+        # print(robot1.initvel)
         robot1.vel = robot1.initvel
 
 def vo_resolve_by_project(robot_a, angle1, angle2, centre):
@@ -172,7 +189,7 @@ def main():
     plt.xlim(-50, 50)
     plt.ylim(-50, 50)
 
-    robot_a = robot(np.array([-40.0, -40.0]), np.array([2.0, 2.0]))
+    robot_a = robot(np.array([40.0, 40.0]), np.array([-2.0, -2.0]))
     robot_b = robot(np.array([-20.0, -20.0]), np.array([0.2, 0.2]))
     
     robot_obj_list.append(robot_a)
@@ -180,7 +197,7 @@ def main():
 
     cnt = 0
     toggle = 0
-    for i in range(30):
+    for i in range(40):
         # plt.cla()
         
         plt.plot(block = 'False')
