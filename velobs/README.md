@@ -10,6 +10,9 @@ ffmpeg -t 5 -pattern_type glob -i '*.png' -vf "scale=1280:-1:flags=lanczos,split
 ## 2-slowpoke-intruder
 ![scenario2](https://github.com/nilay994/trytime/raw/master/velobs/2-slowpoke-intruder.gif "scenario2")
 
+## 2-5-slowpoke
+![scenario2-5](https://github.com/nilay994/trytime/raw/master/velobs/2-5-slowpoke.gif "scenario2-5")
+
 ## 3-oncoming-wrong-lane-dude
 ![scenario3](https://github.com/nilay994/trytime/raw/master/velobs/3-oncoming-wrong-lane-dude.gif "scenario3")
 
