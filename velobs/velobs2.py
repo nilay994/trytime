@@ -6,11 +6,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 MAX_VEL = 20.0
-RR = 3.0
+RR = 1.0
 MAX_ROBOTS = 3
 
 def config_matplotlib():
-    plt.rcParams['figure.figsize'] = (10, 8)
+    plt.rcParams['figure.figsize'] = (10, 10)
     gray = '444444'
     plt.rcParams['axes.facecolor'] = 'f5f5f5'
     plt.rcParams['axes.edgecolor'] = gray
@@ -109,7 +109,7 @@ def detect(robot1, robot2):
     plt.plot(oldvel[0], oldvel[1], 'or', alpha=0.2)
 
     # [patchwork] collision cone widens just too much
-    if ((tcpa > 0) and (dcpa < RR) and (deltad > 1.5 * RR)):
+    if ((tcpa > 0) and (dcpa < RR)): # and (deltad > 1.5 * RR)):
         # [patchwork] co-ordination problem solved by taking right (0.1)
         if vrel_body[1]<= 0.5:
             newvel = vo_resolve_by_project(robot1, angleb1, angleb2, centre)
@@ -167,24 +167,25 @@ def main():
     plt.grid(True, which='minor', color='gray', linestyle = '--', linewidth = 0.5)
     plt.minorticks_on()
     plt.axis('equal')
-    plt.xlim(-15, 15)
-    plt.ylim(-15, 15)
+    plt.xlim(-5, 5)
+    plt.ylim(-5, 5)
 
-    robot_a = robot(np.array([-6.0, -6.0]), 0.2, np.deg2rad(45.0))
-    robot_b = robot(np.array([-15.0, -15.0]), 0.8, np.deg2rad(45.0))
+    robot_a = robot(np.array([-2.0, -2.0]), 0.2, np.deg2rad(45.0))
+    robot_b = robot(np.array([2.0, 2.0]), 0.1, np.deg2rad(45.0))
     
     robot_obj_list.append(robot_a)
     robot_obj_list.append(robot_b)
 
     cnt = 0
     toggle = 0
-    for i in range(35):
+    for i in range(50):
         # plt.cla()
         
         # detect(robot_b, robot_a)
         plt.plot(block = 'False')
         robot_a.move()
-        robot_b.move()
+        if i%8 == 0:
+            robot_b.move()
         robot_a.draw(plt)
         robot_b.draw(plt)
 
