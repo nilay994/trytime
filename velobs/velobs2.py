@@ -1,18 +1,17 @@
-# pseudo code: simulate basic velocity obstacle for 2 robots only
-# use the drel trel analogy to predict whether any collision is possible
-# this script hence wouldn't only go to collision avoidance mode when self vel is in collision cone
-# it would also go to collision avoidance more when tcpa and dcpa are unsafe
+# simulation preudo code: simulate basic velocity obstacle for 2 robots only
+# use the dcpa tcpa analogy to predict whether any collision is possible (Dennis)
+# red dot: original velocity, green dot: resolved velocity
+
 import matplotlib.pyplot as plt
 import numpy as np
 
-MAX_VEL = 20
-MAX_DIST = 25
-RR = 5
-MAX_ROBOTS = 3
+VEL_CONE = 20.0
+MAX_VEL = 3.0
+RR = 10.0
 
 def config_matplotlib():
-    plt.rcParams['figure.figsize'] = (10, 8)
-    gray = "444444"
+    plt.rcParams['figure.figsize'] = (10, 10)
+    gray = '444444'
     plt.rcParams['axes.facecolor'] = 'f5f5f5'
     plt.rcParams['axes.edgecolor'] = gray
     plt.rcParams['grid.linestyle'] = '-'
@@ -39,25 +38,21 @@ def polar2cart(mag, direction):
 
 
 class robot:
-    
-
-    def __init__(self, pos, vel, head):
+    def __init__(self, pos, vel):
         self.pos = pos
         self.vel = vel
-        self.head = head
         # create copies for after conflict resolution
-        self.oldvel = vel
-        self.oldhead = head
+        self.initvel = vel
         self.firstRun = True
 
     def move(self):
         # [TODO] to get sizeable plots, scale vel
-        [delx, dely] = polar2cart(self.vel, self.head)
-        self.pos[0] += delx
-        self.pos[1] += dely
+        self.pos[0] += self.vel[0]
+        self.pos[1] += self.vel[1]
 
     def draw(self, plt):
-        dx, dy = polar2cart(self.vel/2, self.head)
+        dx = 0.05 * self.vel[0]
+        dy = 0.05 * self.vel[1]
         originpt = self.pos[0], self.pos[1]
         # global firstRun
         global qv
@@ -65,65 +60,93 @@ class robot:
         if (self.firstRun):
             qv = plt.quiver(*originpt, dx, dy, scale = 10)
             qv.set_color('black')
-            qv.set_alpha('1')
+            qv.set_alpha(1.0)
             self.firstRun=False
-            print("first.......")
         
         if (self.firstRun==False):
             qv.set_color('black')
-            qv.set_alpha('0.2')
+            qv.set_alpha(0.2)
             qv = plt.quiver(*originpt, dx, dy, scale = 10)
             qv.set_color('black')
-            qv.set_alpha('1')
+            qv.set_alpha(1.0)
 
+        # draw RR
         # print (originpt)
         # rad = plt.Circle((self.pos[0], self.pos[1]), RR, color='r', alpha = 0.1)
         # ax = plt.gca()
         # ax.add_artist(rad)
 
-
-
+cnttrue = 0
+cntfalse = 0
 # hacky direct version
 def detect(robot1, robot2):
+    global cnttrue, cntfalse
     drel = robot1.pos - robot2.pos
-    vrel = polar2cart(robot1.vel, robot1.head) - polar2cart(robot2.vel, robot2.head)
+    vrel = robot1.vel - robot2.vel
+
+    norm_drel = np.linalg.norm(drel)    
     norm_vrel = np.linalg.norm(vrel)
+
+    # if too close, stop then are there, norm_vrel = measurement noise of GPS
+    if ((norm_drel < 0.75 * RR) and (norm_vrel < 2.0)):
+        robot1.vel[0] = np.clip(0, -MAX_VEL, MAX_VEL)
+        robot1.vel[1] = np.clip(0, -MAX_VEL, MAX_VEL)
+
+    # TODO: if norm_drel is too far and norm_vrel is too small, then don't return false detect!
+
     if norm_vrel < 0.1:
         norm_vrel = 0.1
+    # collision time elapsed, negative value infers collision was expected in the past
     tcpa = - np.inner(drel, vrel) / (norm_vrel**2)
-    dcpa = (abs((np.linalg.norm(drel)**2) - ((tcpa ** 2) * (np.linalg.norm(vrel)**2)))) ** (1./2)
+    # distance between bots when collision is predicted
+    dcpa = (abs((norm_drel**2) - ((tcpa ** 2) * (norm_vrel**2)))) ** (1.0/2)
 
     # print(round(tcpa, 2), round(dcpa, 2))
-
-    angleb = np.arctan2(robot2.pos[1], robot2.pos[0])
-    # do atan dist here
-    deltad = np.linalg.norm(drel)
+    angleb = np.arctan2(robot2.pos[1]-robot1.pos[1], robot2.pos[0]-robot1.pos[0])
+    deltad = norm_drel
     angleb1 = angleb - np.arctan(RR/deltad)
     angleb2 = angleb + np.arctan(RR/deltad)
 
-    centre = robot1.pos + polar2cart(robot2.vel, robot2.head)
+    centre = robot1.pos + robot2.vel
     pt1 = centre
-    pt2 = centre + np.array([(MAX_VEL * np.cos(angleb1)), (MAX_VEL * np.sin(angleb1))])
-    pt3 = centre + np.array([(MAX_VEL * np.cos(angleb2)), (MAX_VEL * np.sin(angleb2))])
+    pt2 = centre + np.array([(VEL_CONE * np.cos(angleb1)), (VEL_CONE * np.sin(angleb1))])
+    pt3 = centre + np.array([(VEL_CONE * np.cos(angleb2)), (VEL_CONE * np.sin(angleb2))])
     plt.plot([pt2[0], pt1[0], pt3[0]], [pt2[1], pt1[1], pt3[1]], '-o', color='gray', alpha=0.2)
     
-    oldvel = robot1.pos + polar2cart(robot1.vel, robot1.head)
+    oldvel = robot1.pos + robot1.vel
     plt.plot(oldvel[0], oldvel[1], 'or', alpha=0.2)
 
-    if ((tcpa > 0) and (dcpa < RR)):
-        newvel = vo_resolve_by_project(robot1, angleb1, angleb2, centre)
-        avel, robot1.head = cart2polar(newvel)
-        robot1.vel = np.clip(avel, -3.0, 3.0)
-        # print (robot_a.vel, np.rad2deg(robot_a.head))
-    else: 
-        robot1.vel = robot1.oldvel
-        robot1.head = robot1.oldhead
+    # tcpa > 0: collision in future
+    # dcpa < RR: distance during collision
+    # tcpa < 6: ignore distant future, evade if crash expected in a few (6) seconds 
+    # deltad > RR condition avoids planning when collision cone is too wide
+    if ((tcpa > 0) and (tcpa < 20) and (dcpa < RR) and (deltad > RR)):
+        cnttrue = cnttrue + 1
+        cntfalse = 0
+    else:
+        cnttrue = 0
+        cntfalse = cntfalse + 1
 
+    # making-sure filter
+    if (cnttrue > 5):
+        if (vrel[0]+3.0) >= (vrel[1]):
+            # [patch] co-ordination problem solved by forcing right
+            newvel = vo_resolve_by_project(robot1, angleb1, angleb2, centre)
+        else:
+            newvel = vo_resolve_by_project(robot1, angleb2, angleb1, centre)
+        
+        robot1.vel[0] = np.clip(newvel[0], -MAX_VEL, MAX_VEL)
+        robot1.vel[1] = np.clip(newvel[1], -MAX_VEL, MAX_VEL)
+    
+    if (cntfalse > 5):
+        # WHAT!: How is initvel changing? It is only done in the constructor!!
+        # print(robot1.initvel)
+        robot1.vel = robot1.initvel
 
 def vo_resolve_by_project(robot_a, angle1, angle2, centre):
     
     #  body frame to world frame velocity
-    vela = robot_a.pos + polar2cart(robot_a.vel, robot_a.head)
+    vela = robot_a.pos + robot_a.vel
 
     yintercept = centre[1] - (np.tan(angle1) * centre[0])
     # if slope is zero, projection is the x-coordinate itself
@@ -159,41 +182,56 @@ def vo_resolve_by_project(robot_a, angle1, angle2, centre):
 robot_obj_list = []
 def main():
     config_matplotlib()
-    gray = "444444"
     fig = plt.figure()
-    plt.grid(True, which='major')
-    plt.grid(True, which='minor', color=gray, linestyle = '--', linewidth = 0.5)
+    plt.grid(True, which='major', color='gray', linestyle = '-', linewidth = 1)
+    plt.grid(True, which='minor', color='gray', linestyle = '--', linewidth = 0.5)
     plt.minorticks_on()
     plt.axis('equal')
-    plt.xlim(-15, 15)
-    plt.ylim(-15, 15)
+    plt.xlim(-50, 50)
+    plt.ylim(-50, 50)
 
-    robot_a = robot(np.array([-7.0, 0.0]), 0.4, np.deg2rad(40.0))
-    robot_b = robot(np.array([7.0, 0.0]), 0.4, np.deg2rad(150.0))
+    robot_a = robot(np.array([40.0, 40.0]), np.array([-2.0, -2.0]))
+    robot_b = robot(np.array([-20.0, -20.0]), np.array([0.2, 0.2]))
     
     robot_obj_list.append(robot_a)
     robot_obj_list.append(robot_b)
 
     cnt = 0
-    for i in range(35):
+    toggle = 0
+    for i in range(40):
         # plt.cla()
-        detect(robot_a, robot_b)
-        # detect(robot_b, robot_a)
+        
         plt.plot(block = 'False')
         robot_a.move()
         robot_b.move()
+
+        # add esp32 delay
+        # if i % 8 == 0:
+        #     robot_b.move()
+
         robot_a.draw(plt)
         robot_b.draw(plt)
+
+        # robot_a is in avoid mode,
+        # if robot_a arg is passed before robot_b
+        detect(robot_a, robot_b)
+
+        # if (abs(robot_b.pos[1]) > 7):
+        #     toggle = ~toggle
+        #     if toggle:
+        #         robot_b.head = np.deg2rad(135.0)
+        #     else:
+        #         robot_b.head = np.deg2rad(-45.0)
+
         plt.plot()
         filename = 'logs/velobs%02d.png' % cnt
         cnt = cnt + 1
         plt.savefig(filename)
-        plt.pause(1)
+        plt.pause(0.1)
         # q = input('keypress to end')
         # if q != 'c':
         #     break
     plt.show()
-
 
 if __name__ == "__main__":
     main()
