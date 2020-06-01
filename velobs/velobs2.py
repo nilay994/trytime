@@ -87,14 +87,6 @@ def detect(robot1, robot2):
     norm_drel = np.linalg.norm(drel)    
     norm_vrel = np.linalg.norm(vrel)
 
-    # if too close, stop then are there, norm_vrel = measurement noise of GPS
-    if ((norm_drel < 0.75 * RR) or (norm_vrel < 2.0)):
-        # robot1.vel[0] = np.clip(0, -MAX_VEL, MAX_VEL)
-        # robot1.vel[1] = np.clip(0, -MAX_VEL, MAX_VEL)
-        robot1.vel = robot1.initvel
-
-    # TODO: if norm_drel is too far and norm_vrel is too small, then don't return false detect!
-
     if norm_vrel < 0.1:
         norm_vrel = 0.1
     # collision time elapsed, negative value infers collision was expected in the past
@@ -102,7 +94,7 @@ def detect(robot1, robot2):
     # distance between bots when collision is predicted
     dcpa = (abs((norm_drel**2) - ((tcpa ** 2) * (norm_vrel**2)))) ** (1.0/2)
 
-    print(round(tcpa, 2), round(dcpa, 2))
+    # print(round(tcpa, 2), round(dcpa, 2))
     angleb = np.arctan2(robot2.pos[1]-robot1.pos[1], robot2.pos[0]-robot1.pos[0])
     deltad = norm_drel
     angleb1 = angleb - np.arctan(RR/deltad)
@@ -117,37 +109,45 @@ def detect(robot1, robot2):
     oldvel = robot1.pos + robot1.vel
     plt.plot(oldvel[0], oldvel[1], 'or', alpha=0.2)
 
+    # too close, don't take decisions
+    if (norm_drel < 1.25 * RR):
+        robot1.vel = robot1.initvel
+        return
+
     # tcpa > 0: collision in future
     # dcpa < RR: distance during collision
     # tcpa < 6: ignore distant future, evade if crash expected in a few (6) seconds 
     # deltad > RR condition avoids planning when collision cone is too wide
-    if ((tcpa > 0) and (tcpa < 20) and (dcpa < RR) and (deltad > RR)):
+    if ((tcpa > 0) and (tcpa < 20) and (dcpa < RR)):
         cnttrue = cnttrue + 1
         cntfalse = 0
-    if (tcpa < 0.0):
+    if ((tcpa < -0.5)):
         cnttrue = 0
         cntfalse = cntfalse + 1
     
     # print(cnttrue, cntfalse)
     # making-sure filter
     if (cnttrue > 5):
-        if (vrel[0]+3.0) >= (vrel[1]):
-            # [patch] co-ordination problem solved by forcing right
+        obs_phase = np.arctan2(robot2.vel[1], robot2.vel[0])
+        # force right: for solving co-ordination problem
+        if (np.abs(obs_phase - angleb2) < (np.abs(obs_phase - angleb1) + 0.2)):
             newvel = vo_resolve_by_project(robot1, angleb1, angleb2, centre)
+            print("should resolve on b1: lower angle: " + str(angleb1*180.0/3.142))
         else:
             newvel = vo_resolve_by_project(robot1, angleb2, angleb1, centre)
+            print("should resolve on b2: higher angle: " + str(angleb2*180.0/3.142))
         
         robot1.vel[0] = np.clip(newvel[0], -MAX_VEL, MAX_VEL)
         robot1.vel[1] = np.clip(newvel[1], -MAX_VEL, MAX_VEL)
     
     if (cntfalse > 5):
-        # WHAT!: How is initvel changing? It is only done in the constructor!!
-        print(robot1.initvel)
+        # TODO: WHAT!: How is initvel changing? It is only done in the constructor!!
+        # print(robot1.initvel)
         robot1.vel = robot1.initvel
 
 def vo_resolve_by_project(robot_a, angle1, angle2, centre):
     
-    #  body frame to world frame velocity
+    # body frame to world frame velocity
     vela = robot_a.pos + robot_a.vel
 
     yintercept = centre[1] - (np.tan(angle1) * centre[0])
@@ -192,8 +192,8 @@ def main():
     plt.xlim(-50, 50)
     plt.ylim(-50, 50)
 
-    robot_a = robot(np.array([-20.0, -20.0]), np.array([0.2, 2.0]), np.array([0.2, 2.0]))
-    robot_b = robot(np.array([20.0, -20.0]), np.array([-0.2, 2.0]), np.array([-0.2, 2.0]))
+    robot_a = robot(np.array([-20.0, -20.0]), np.array([1.0, 1.0]), np.array([1.0, 1.0]))
+    robot_b = robot(np.array([40.0, 40.0]), np.array([-2.0, -2.0]), np.array([-2.0, -2.0]))
     
     robot_obj_list.append(robot_a)
     robot_obj_list.append(robot_b)
