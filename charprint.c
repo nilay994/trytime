@@ -9,8 +9,27 @@ void strptrtest(uint8_t* strs) {
 	memcpy(strs, teststr, sizeof(teststr));
 }
 
+void localstring2(uint8_t* str, int len) {
+
+	printf("second fn: \n");
+        for (int i = 0; i < len; i++) {
+		printf("%c", str[i]);
+        }
+	printf("\n");
+}
+
+void localstring(uint8_t *str, int len) {
+	printf("first fn: \n");
+	for (int i = 0; i < len; i++) {
+		printf("%c", str[i]);
+	}
+	printf("\n");
+	localstring2(&str[0], len);
+}
+
 
 int main() {
+	localstring("hello world", 11);
 
 	/*
 	char str[23];

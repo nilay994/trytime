@@ -38,11 +38,11 @@ def polar2cart(mag, direction):
 
 
 class robot:
-    def __init__(self, pos, vel):
+    def __init__(self, pos, vel, initvel):
         self.pos = pos
         self.vel = vel
         # create copies for after conflict resolution
-        self.initvel = vel
+        self.initvel = initvel
         self.firstRun = True
 
     def move(self):
@@ -88,9 +88,10 @@ def detect(robot1, robot2):
     norm_vrel = np.linalg.norm(vrel)
 
     # if too close, stop then are there, norm_vrel = measurement noise of GPS
-    if ((norm_drel < 0.75 * RR) and (norm_vrel < 2.0)):
-        robot1.vel[0] = np.clip(0, -MAX_VEL, MAX_VEL)
-        robot1.vel[1] = np.clip(0, -MAX_VEL, MAX_VEL)
+    if ((norm_drel < 0.75 * RR) or (norm_vrel < 2.0)):
+        # robot1.vel[0] = np.clip(0, -MAX_VEL, MAX_VEL)
+        # robot1.vel[1] = np.clip(0, -MAX_VEL, MAX_VEL)
+        robot1.vel = robot1.initvel
 
     # TODO: if norm_drel is too far and norm_vrel is too small, then don't return false detect!
 
@@ -101,7 +102,7 @@ def detect(robot1, robot2):
     # distance between bots when collision is predicted
     dcpa = (abs((norm_drel**2) - ((tcpa ** 2) * (norm_vrel**2)))) ** (1.0/2)
 
-    # print(round(tcpa, 2), round(dcpa, 2))
+    print(round(tcpa, 2), round(dcpa, 2))
     angleb = np.arctan2(robot2.pos[1]-robot1.pos[1], robot2.pos[0]-robot1.pos[0])
     deltad = norm_drel
     angleb1 = angleb - np.arctan(RR/deltad)
@@ -123,10 +124,11 @@ def detect(robot1, robot2):
     if ((tcpa > 0) and (tcpa < 20) and (dcpa < RR) and (deltad > RR)):
         cnttrue = cnttrue + 1
         cntfalse = 0
-    else:
+    if (tcpa < 0.0):
         cnttrue = 0
         cntfalse = cntfalse + 1
-
+    
+    # print(cnttrue, cntfalse)
     # making-sure filter
     if (cnttrue > 5):
         if (vrel[0]+3.0) >= (vrel[1]):
@@ -140,7 +142,7 @@ def detect(robot1, robot2):
     
     if (cntfalse > 5):
         # WHAT!: How is initvel changing? It is only done in the constructor!!
-        # print(robot1.initvel)
+        print(robot1.initvel)
         robot1.vel = robot1.initvel
 
 def vo_resolve_by_project(robot_a, angle1, angle2, centre):
@@ -190,8 +192,8 @@ def main():
     plt.xlim(-50, 50)
     plt.ylim(-50, 50)
 
-    robot_a = robot(np.array([40.0, 40.0]), np.array([-2.0, -2.0]))
-    robot_b = robot(np.array([-20.0, -20.0]), np.array([0.2, 0.2]))
+    robot_a = robot(np.array([-20.0, -20.0]), np.array([0.2, 2.0]), np.array([0.2, 2.0]))
+    robot_b = robot(np.array([20.0, -20.0]), np.array([-0.2, 2.0]), np.array([-0.2, 2.0]))
     
     robot_obj_list.append(robot_a)
     robot_obj_list.append(robot_b)
