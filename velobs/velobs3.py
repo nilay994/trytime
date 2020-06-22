@@ -63,7 +63,7 @@ class robot:
 def detect_cc_version(robot_a, robot_b):
     # build solution space diagram
     # find angle of b in world frame
-    angleb = np.arctan2(robot_b.pos[1], robot_b.pos[0])
+    angleb = np.arctan2(robot_b.pos[1] - robot_a.pos[1], robot_b.pos[0] - robot_a.pos[0])
     # do atan dist here
     deltad = np.linalg.norm(robot_a.pos - robot_b.pos)
     angleb1 = angleb - np.arctan(RR/deltad)
@@ -160,17 +160,17 @@ def resolve(robot_a, robot_b):
 robot_obj_list = []
 def main():
     config_matplotlib()
-    gray = "444444"
+    # gray = "444444"
     fig = plt.figure()
     plt.grid(True, which='major')
-    plt.grid(True, which='minor', color=gray, linestyle = '--', linewidth = 0.5)
+    plt.grid(True, which='minor', linestyle = '--', linewidth = 0.5)
     plt.minorticks_on()
     plt.axis('equal')
     plt.xlim(-15, 15)
     plt.ylim(-15, 15)
 
     robot_a = robot(np.array([-3.0, -3.0]), 2, np.deg2rad(45))
-    robot_b = robot(np.array([3.0, 3.0]), 2, np.deg2rad(-135))
+    robot_b = robot(np.array([3.0, -3.0]), 2, np.deg2rad(135))
     
     robot_obj_list.append(robot_a)
     robot_obj_list.append(robot_b)

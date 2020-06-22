@@ -130,6 +130,7 @@ def detect(robot1, robot2):
     if (cnttrue > 5):
         obs_phase = np.arctan2(robot2.vel[1], robot2.vel[0])
         # force right: for solving co-ordination problem
+        # todo: adopt vector dot product from pprz branch instead of atan2 compare
         if (np.abs(obs_phase - angleb2) < (np.abs(obs_phase - angleb1) + 0.2)):
             newvel = vo_resolve_by_project(robot1, angleb1, angleb2, centre)
             print("should resolve on b1: lower angle: " + str(angleb1*180.0/3.142))
@@ -192,8 +193,8 @@ def main():
     plt.xlim(-50, 50)
     plt.ylim(-50, 50)
 
-    robot_a = robot(np.array([-20.0, -20.0]), np.array([1.0, 1.0]), np.array([1.0, 1.0]))
-    robot_b = robot(np.array([40.0, 40.0]), np.array([-2.0, -2.0]), np.array([-2.0, -2.0]))
+    robot_a = robot(np.array([-40.0, 40.0]), np.array([1.0, -1.0]), np.array([1.0, -1.0]))
+    robot_b = robot(np.array([-40.0, -40.0]), np.array([1.0, 1.0]), np.array([1.0, 1.0]))
     
     robot_obj_list.append(robot_a)
     robot_obj_list.append(robot_b)
