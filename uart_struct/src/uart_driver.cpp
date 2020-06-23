@@ -18,14 +18,14 @@ SerialPort::SerialPort(const std::string &port)
 	: receiver_thread_(),
 	  receiver_thread_should_exit_(false),
 	  serial_port_fd_(-1) {
-	
+
 	valid_uart_message_received = false;
 	if (!connectSerialPort(port)) {
-		std::cout << "[ERR] can't connect to port" << std::endl;
+		std::cout << "[Serial] Error. Can't connect to port" << std::endl;
 	}
 
 	if (!startReceiverThread()) {
-		std::cout << "[ERR] can't start receiver thread" << std::endl;
+		std::cout << "[Serial] Error. Can't start receiver thread" << std::endl;
 	}
 }
 
@@ -38,12 +38,12 @@ bool SerialPort::connectSerialPort(const std::string &port) {
 	serial_port_fd_ = open(port.c_str(), O_RDWR | O_NOCTTY);
 
 	if (serial_port_fd_ == -1) {
-		std::cout << "[ERR] can't open serial" << std::endl;
+		std::cout << "[Serial] Error. Can't open serial port" << std::endl;
 		return false;
 	}
 	if (!configSerialPort()) {
 		close(serial_port_fd_);
-		std::cout << "[ERR] can't config serial" << std::endl;
+		std::cout << "[Serial] Error. Can't configure serial port" << std::endl;
 		return false;
 	}
 	return true;
@@ -76,7 +76,6 @@ bool SerialPort::configSerialPort() const {
 	// no NL to CR translation, no column 0 CR suppression,
 	// no Ctrl-D suppression, no fill characters, no case mapping,
 	// no local output processing
-	//
 	uart_config.c_oflag &= ~(OCRNL | ONLCR | ONLRET | ONOCR | OFILL | OPOST);
 
 	// Input flags - Turn off input processing
@@ -84,18 +83,15 @@ bool SerialPort::configSerialPort() const {
 	// no NL to CR translation, don't mark parity errors or breaks
 	// no input parity check, don't strip high bit off,
 	// no XON/XOFF software flow control
-	//
 	uart_config.c_iflag &=
 		~(IGNBRK | BRKINT | ICRNL | INLCR | PARMRK | INPCK | ISTRIP | IXON);
 
-	//
 	// No line processing:
 	// echo off
 	// echo newline off
 	// canonical mode off,
 	// extended input processing off
 	// signal chars off
-	//
 	uart_config.c_lflag &= ~(ECHO | ECHOE | ECHONL | ICANON | IEXTEN | ISIG);
 
 	// Turn off character processing
@@ -123,7 +119,7 @@ bool SerialPort::configSerialPort() const {
 	if (ioctl(serial_port_fd_, TCSETS2, &uart_config) < 0) {
 		return false;
 	}
-	std::cout << "configured serial! " << std::endl;
+	std::cout << "[Serial] Configured" << std::endl;
 	return true;
 }
 
@@ -132,7 +128,7 @@ void SerialPort::serialPortReceiveThread() {
 	struct pollfd fds[1];
 	fds[0].fd = serial_port_fd_;
 	fds[0].events = POLLIN;
-	std::cout << "serialPortReceiveThread spawned" << std::endl;
+	std::cout << "[Serial] ReceiveThread spawned" << std::endl;
 	// init of thread
 	uint8_t init_buf[10];
 	while (read(serial_port_fd_, init_buf, sizeof(init_buf)) > 0) {
@@ -143,6 +139,7 @@ void SerialPort::serialPortReceiveThread() {
 		usleep(100);
 	}
 
+	// A lot of heap?!
 	std::deque<uint8_t> bytes_buf;
 
 	// while atomic lock of thread
@@ -161,7 +158,7 @@ void SerialPort::serialPortReceiveThread() {
 					bytes_buf.push_back(read_buf[i]);
 				}
 
-				valid_uart_message_received = false;			
+				valid_uart_message_received = false;
 				memset(uart_msg_bytes, 0, uartFrameLength_);
 
 				while (bytes_buf.size() >= uartFrameLength_) {
@@ -169,21 +166,23 @@ void SerialPort::serialPortReceiveThread() {
 					// A valid SBUS message must have to correct header and footer byte
 					// as well as zeros in the four most significant bytes of the flag
 					// byte (byte 23)
-					if (bytes_buf.front() == HeaderByte_ && 
-							bytes_buf[uartFrameLength_ - 1] == FooterByte_) {
+					if (bytes_buf.front() == HeaderByte_ &&
+							bytes_buf[uartFrameLength_ + 1] == FooterByte_) {
+						// Populate the uart-rx struct
 						for (uint8_t i = 0; i < uartFrameLength_; i++) {
 							uart_msg_bytes[i] = bytes_buf.front();
 							bytes_buf.pop_front();
 							// printf("0x%02x,", uart_msg_bytes[i]);
 						}
-						memcpy(&input_dev, &(this->uart_msg_bytes[1]), FRAMELEN);
-            			// std::cout << "val: " << input_dev.pot << std::endl;
-						
-						// std::cout << "works" << std::endl;
+						memcpy(&input_dev, &(this->uart_msg_bytes[0]), uartFrameLength_);
+            					// perfect deparsing from driver.. :)
+						// std::cout << "val: " << input_dev.pot << std::endl;
+
 						valid_uart_message_received = true;
 					} else {
-						// If it is not a valid SBUS message but has a correct header byte
-						// we need to pop it to prevent staying in this loop forever
+						// If UART-DMA doesn't read header and footerbyte,
+						// then keep poping until you do.
+						std::cout << "[UART packet] Header and Footer not found" << std::endl;
 						bytes_buf.pop_front();
 						// warn, not in sync
 					}
@@ -191,18 +190,17 @@ void SerialPort::serialPortReceiveThread() {
 					// If not, pop front elements until we have a valid header byte
 					while (!bytes_buf.empty() && bytes_buf.front() != HeaderByte_) {
 						bytes_buf.pop_front();
-						std::cout<< "dframe aligning" << std::endl;
+						std::cout<< "[UART packet] Frame aligning" << std::endl;
 					}
 				}
 
-				
 				if (valid_uart_message_received) {
-				// to parse only the lastest sbus message in the buffer of 4
-				// Sometimes we read more than one sbus message at the same time
-				// By running the loop above for as long as possible before handling
-				// the received sbus message we achieve to only process the latest one
-				// const SBusMsg received_sbus_msg = parseSbusMessage(sbus_msg_bytes);
-				// handleReceivedSbusMessage(received_sbus_msg);
+					// to parse only the lastest sbus message in the buffer of 4
+					// Sometimes we read more than one sbus message at the same time
+					// By running the loop above for as long as possible before handling
+					// the received sbus message we achieve to only process the latest one
+					// const SBusMsg received_sbus_msg = parseSbusMessage(sbus_msg_bytes);
+					// handleReceivedSbusMessage(received_sbus_msg);
 				}
 			}
 		}
@@ -212,13 +210,13 @@ void SerialPort::serialPortReceiveThread() {
 }
 
 bool SerialPort::disconnectSerialPort() {
-  
+
 	// stop receiver thread
 	if (!receiver_thread_.joinable()) {
-    	return true;
+    		return true;
   	}
 
-	// atomic bool immediate stop, 
+	// atomic bool immediate stop,
 	// stop parsing incorrect values at the end
 	receiver_thread_should_exit_ = true;
 

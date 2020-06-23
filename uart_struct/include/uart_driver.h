@@ -1,17 +1,15 @@
-/* 
+/*
 Threaded UART receiving buffer for any linux computer
-Adopted from: 
-        MIT License Copyright (c) 2018 Matthias Faessler (Robotics and Perception Group, 
-        University of Zurich, Switzerland)
-Modified by:
-        nilay994
+Deep copy from:
+        MIT License Copyright (c) 2018 Matthias Faessler
+	(Robotics and Perception Group, University of Zurich, Switzerland)
 */
 
 #include <thread>
 #include <atomic>
 #include "uart_struct.h"
 
-#define FRAMELEN 7
+#define FRAMELEN 7 // with start and end
 
 class SerialPort {
         public:

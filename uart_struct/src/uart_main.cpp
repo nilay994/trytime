@@ -9,11 +9,11 @@
 
 int main(int agv, char** argv) {
 
-    SerialPort *obj = new SerialPort("/dev/ttyUSB0");
+    SerialPort *obj = new SerialPort("/dev/ttyTHS2");
     input_dev_t input_dev;
 
     while(1) {
-        
+
         if (obj->valid_uart_message_received) {
             // for (int i=0; i<FRAMELEN; i++) {
             //     printf("0x%02x,", obj->uart_msg_bytes[i]);
