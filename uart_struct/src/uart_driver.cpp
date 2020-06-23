@@ -14,13 +14,13 @@
 
 input_dev_t input_dev;
 
-SerialPort::SerialPort(const std::string &port)
+SerialPort::SerialPort(const std::string &port, int uart_speed)
 	: receiver_thread_(),
 	  receiver_thread_should_exit_(false),
 	  serial_port_fd_(-1) {
 
 	valid_uart_message_received = false;
-	if (!connectSerialPort(port)) {
+	if (!connectSerialPort(port, uart_speed)) {
 		std::cout << "[Serial] Error. Can't connect to port" << std::endl;
 	}
 
@@ -31,7 +31,7 @@ SerialPort::SerialPort(const std::string &port)
 
 SerialPort::~SerialPort() { disconnectSerialPort(); }
 
-bool SerialPort::connectSerialPort(const std::string &port) {
+bool SerialPort::connectSerialPort(const std::string &port, int uart_speed) {
 	// Open serial port
 	// O_RDWR - Read and write
 	// O_NOCTTY - Ignore special chars like CTRL-C
@@ -41,7 +41,7 @@ bool SerialPort::connectSerialPort(const std::string &port) {
 		std::cout << "[Serial] Error. Can't open serial port" << std::endl;
 		return false;
 	}
-	if (!configSerialPort()) {
+	if (!configSerialPort(uart_speed)) {
 		close(serial_port_fd_);
 		std::cout << "[Serial] Error. Can't configure serial port" << std::endl;
 		return false;
@@ -59,7 +59,7 @@ bool SerialPort::startReceiverThread() {
 	return true;
 }
 
-bool SerialPort::configSerialPort() const {
+bool SerialPort::configSerialPort(int uart_speed) const {
 	// clear config
 	fcntl(serial_port_fd_, F_SETFL, 0);
 	// read non blocking, return 0 if nothing is read
@@ -111,7 +111,7 @@ bool SerialPort::configSerialPort() const {
   	uart_config.c_cflag |= BOTHER;
 
 	// B115200, may require termios header for set default speed
-	const speed_t spd = 115200;
+	const speed_t spd = uart_speed;
 	uart_config.c_ispeed = spd;
 	uart_config.c_ospeed = spd;
 

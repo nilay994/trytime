@@ -5,11 +5,19 @@
 #include "uart_struct.h"
 #include "uart_driver.h"
 
-// sudo gtkterm -b 8 -t 1 -s 115200 -p /dev/ttyTHS2
+// execute: ./uart_serial_example /dev/ttyUSB0 115200
+int main(int argc, char** argv) {
+    // defaults: pointer is not const, the thing that it is pointing to is const
+    const char *uart_port = "/dev/ttyUSB0";
+    int uart_speed = 115200;
+    // if non default
+    if (argc > 1) {
+        uart_port = argv[1];
+        uart_speed = std::stoi(argv[2]);
+    }
+    printf("Opening port: %s at baud: %d\n", uart_port, uart_speed);
 
-int main(int agv, char** argv) {
-
-    SerialPort *obj = new SerialPort("/dev/ttyTHS2");
+    SerialPort *obj = new SerialPort(uart_port, uart_speed);
     input_dev_t input_dev;
 
     while(1) {
@@ -27,3 +35,5 @@ int main(int agv, char** argv) {
     }
     return 0;
 }
+
+// sudo gtkterm -b 8 -t 1 -s 115200 -p /dev/ttyTHS2

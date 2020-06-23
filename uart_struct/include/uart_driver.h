@@ -13,15 +13,15 @@ Deep copy from:
 
 class SerialPort {
         public:
-                SerialPort(const std::string& port);
+                SerialPort(const std::string& port, int uart_speed);
                 ~SerialPort();
                 void serialPortReceiveThread();
                 uint8_t uart_msg_bytes[FRAMELEN];
                 bool valid_uart_message_received = false;
 
         private:
-                bool connectSerialPort(const std::string& port);
-                bool configSerialPort() const;
+                bool connectSerialPort(const std::string& port, int uart_speed);
+                bool configSerialPort(int uart_speed) const;
                 bool disconnectSerialPort();
                 bool startReceiverThread();
                 // serial port int handle
