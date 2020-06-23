@@ -16,6 +16,7 @@ class SerialPort {
                 SerialPort(const std::string& port, int uart_speed);
                 ~SerialPort();
                 void serialPortReceiveThread();
+                void serialPortTransmitThread();
                 uint8_t uart_msg_bytes[FRAMELEN];
                 bool valid_uart_message_received = false;
 
@@ -24,9 +25,11 @@ class SerialPort {
                 bool configSerialPort(int uart_speed) const;
                 bool disconnectSerialPort();
                 bool startReceiverThread();
+                bool startTransmitThread();
                 // serial port int handle
                 int serial_port_fd_;
                 std::thread receiver_thread_;
+                std::thread transmit_thread_;
                 std::atomic_bool receiver_thread_should_exit_;
 
                 static constexpr uint8_t HeaderByte_ = 0x24;

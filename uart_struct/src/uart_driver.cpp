@@ -27,6 +27,10 @@ SerialPort::SerialPort(const std::string &port, int uart_speed)
 	if (!startReceiverThread()) {
 		std::cout << "[Serial] Error. Can't start receiver thread" << std::endl;
 	}
+	
+	if (!startTransmitThread()) {
+		std::cout << "[Serial] Error. Can't start transmit thread" << std::endl;
+	}
 }
 
 SerialPort::~SerialPort() { disconnectSerialPort(); }
@@ -53,6 +57,16 @@ bool SerialPort::startReceiverThread() {
 	// Start watchdog thread
 	try {
 		receiver_thread_ = std::thread(&SerialPort::serialPortReceiveThread, this);
+	} catch (...) {
+		return false;
+	}
+	return true;
+}
+
+bool SerialPort::startTransmitThread() {
+	// Start watchdog thread
+	try {
+		transmit_thread_ = std::thread(&SerialPort::serialPortTransmitThread, this);
 	} catch (...) {
 		return false;
 	}
@@ -156,6 +170,7 @@ void SerialPort::serialPortReceiveThread() {
 
 				for (ssize_t i = 0; i < nread; i++) {
 					bytes_buf.push_back(read_buf[i]);
+					// printf("0x%02x,", read_buf[i]);
 				}
 
 				valid_uart_message_received = false;
@@ -166,19 +181,19 @@ void SerialPort::serialPortReceiveThread() {
 					// A valid SBUS message must have to correct header and footer byte
 					// as well as zeros in the four most significant bytes of the flag
 					// byte (byte 23)
-					if (bytes_buf.front() == HeaderByte_ &&
-							bytes_buf[uartFrameLength_ + 1] == FooterByte_) {
+					if (bytes_buf.front() == HeaderByte_ && bytes_buf[uartFrameLength_ - 1] == FooterByte_) {
 						// Populate the uart-rx struct
 						for (uint8_t i = 0; i < uartFrameLength_; i++) {
 							uart_msg_bytes[i] = bytes_buf.front();
 							bytes_buf.pop_front();
 							// printf("0x%02x,", uart_msg_bytes[i]);
 						}
-						memcpy(&input_dev, &(this->uart_msg_bytes[0]), uartFrameLength_);
-            					// perfect deparsing from driver.. :)
+						valid_uart_message_received = true;
+
+						memcpy(&input_dev, &(this->uart_msg_bytes[1]), uartFrameLength_);
+            			// perfect deparsing from driver.. :)
 						// std::cout << "val: " << input_dev.pot << std::endl;
 
-						valid_uart_message_received = true;
 					} else {
 						// If UART-DMA doesn't read header and footerbyte,
 						// then keep poping until you do.
@@ -207,6 +222,25 @@ void SerialPort::serialPortReceiveThread() {
 	}
 
 	return;
+}
+
+void SerialPort::serialPortTransmitThread() {
+	std::cout << "[Serial] TransmitThread spawned" << std::endl;
+	uint8_t buffer[7] = {0x24, 0x40, 0x40, 0x00, 0x00, 0x16, 0x2a};
+
+	while(1) {
+		static int var = 1;
+		input_dev_t input_dev_tx = {0};
+		input_dev_tx.pot = var + 1;
+		var = var + 1;
+		memcpy(&buffer[1], &input_dev_tx, 5);
+		const int written = write(serial_port_fd_, buffer, uartFrameLength_);
+  		// tcflush(serial_port_fd_, TCOFLUSH); // might not work on odroid
+  		if (written != uartFrameLength_) {
+			std::cout << "[Serial] written wrong bytes" << std::endl;
+		}
+		std::this_thread::sleep_for(std::chrono::milliseconds(200));
+	}
 }
 
 bool SerialPort::disconnectSerialPort() {
