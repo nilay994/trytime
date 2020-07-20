@@ -11,14 +11,16 @@ int main(int argc, char** argv) {
     const char *uart_port = "/dev/ttyUSB0";
     int uart_speed = 115200;
     // if non default
-    if (argc > 1) {
+    if (argc > 2) {
         uart_port = argv[1];
         uart_speed = std::stoi(argv[2]);
+    } else {
+        printf("[err] Enter port name and baud! \n");
+        printf("Opening port: %s at baud: %d\n", uart_port, uart_speed);
     }
-    printf("Opening port: %s at baud: %d\n", uart_port, uart_speed);
-
+    
     SerialPort *obj = new SerialPort(uart_port, uart_speed);
-    input_dev_t input_dev;
+    uart_packet_t uart_rx_buffer;
 
     while(1) {
 
@@ -27,8 +29,8 @@ int main(int argc, char** argv) {
             //     printf("0x%02x,", obj->uart_msg_bytes[i]);
             // }
             // printf("\n");
-            memcpy(&input_dev, &(obj->uart_msg_bytes[1]), FRAMELEN);
-            std::cout << "val: " << input_dev.pot << std::endl;
+            memcpy(&uart_rx_buffer, &(obj->uart_msg_bytes[1]), FRAMELEN);
+            std::cout << "val: " << uart_rx_buffer.data.pot << std::endl;
         } 
         // TODO: is the else needed? spsc or deep copy decide,
         // exiting ctrl+c difficult while serial is high speed

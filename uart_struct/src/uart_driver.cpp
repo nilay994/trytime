@@ -12,7 +12,8 @@
 #include <string.h>
 #include <uart_struct.h>
 
-input_dev_t input_dev;
+// rx buffer deep copied between receive thread and uart_driver
+uart_packet_t uart_packet;
 
 SerialPort::SerialPort(const std::string &port, int uart_speed)
 	: receiver_thread_(),
@@ -190,7 +191,7 @@ void SerialPort::serialPortReceiveThread() {
 						}
 						valid_uart_message_received = true;
 
-						memcpy(&input_dev, &(this->uart_msg_bytes[1]), uartFrameLength_);
+						memcpy(&uart_packet, &(this->uart_msg_bytes[1]), uartFrameLength_);
             			// perfect deparsing from driver.. :)
 						// std::cout << "val: " << input_dev.pot << std::endl;
 
@@ -226,14 +227,37 @@ void SerialPort::serialPortReceiveThread() {
 
 void SerialPort::serialPortTransmitThread() {
 	std::cout << "[Serial] TransmitThread spawned" << std::endl;
-	uint8_t buffer[7] = {0x24, 0x40, 0x40, 0x00, 0x00, 0x16, 0x2a};
+	uint8_t buffer[10] = {0x24, 0x01, 0x08, 0x01, 0x01, 0x01, 0x01, 0x01, 0x0e, 0x2a};
 
 	while(1) {
 		static int var = 1;
-		input_dev_t input_dev_tx = {0};
-		input_dev_tx.pot = var + 1;
+		uart_packet_t uart_packet_tx = {0};
+
+		uart_packet_tx.info.packet_type = DATA_FRAME;
+		uart_packet_tx.info.packet_length = 0x08; // 1 start byte, 2 info bytes, 5 data bytes
+		uart_packet_tx.data.pot = var;
 		var = var + 1;
-		memcpy(&buffer[1], &input_dev_tx, 5);
+
+		// calc checksum
+		uint8_t checksum = 0;
+		uint8_t *p = (uint8_t *) &uart_packet_tx;
+		for (int i = 0; i < sizeof(uart_packet_t); i++) {
+    		checksum += p[i];
+		}
+
+		#ifdef DBG
+			printf("\n\nchecksum: 0x%02x\n", checksum);
+		#endif
+
+		memcpy(&buffer[1], &uart_packet_tx, sizeof(uart_packet_t));
+		memcpy(&buffer[8], &checksum, sizeof(uint8_t));
+
+		#ifdef DBG
+		for (int i = 0; i < sizeof(uart_packet_t) + 3; i++) {
+			printf("0x%02x, ", buffer[i]);
+		}
+		#endif
+
 		const int written = write(serial_port_fd_, buffer, uartFrameLength_);
   		// tcflush(serial_port_fd_, TCOFLUSH); // might not work on odroid
   		if (written != uartFrameLength_) {

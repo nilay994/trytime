@@ -9,25 +9,23 @@
 
 #include <stdint.h>
 
-/* typedef enum {
-    ESP,
-    BEBOP
-} device_t;
+#define UART_MAX_LEN 30
 
 typedef enum {
-    ACK_FRAME,
-    DATA_FRAME
-} frame_t; 
+  ACK_FRAME = 0,
+  DATA_FRAME,
+  OTHER_FRAME
+} frame_type_t;
 
-// compiler padding is on by default, expect size larger than sum
-typedef struct {
-    uint8_t start_byte;
-    uint8_t source_id;
-    uint8_t destination_id;
-    uint8_t frame_type;
-    drone_state_t drone_state;
-    uint8_t end_byte;
-} uart_packet_t; */
+// decoder state
+typedef enum {
+  JTSN_SYNC = 0,
+  JTSN_INFO,
+  JTSN_DATA,
+  JTSN_ERR_CHK,  // TODO: shift to crc
+  JTSN_RX_OK,
+  JTSN_RX_ERR
+} jetson_state_t;
 
 typedef struct __attribute__((packed)) {
   float pot;
@@ -36,4 +34,18 @@ typedef struct __attribute__((packed)) {
   uint8_t but2:1;
   uint8_t but3:1;
   uint8_t but4:1;
-} input_dev_t;
+} data_frame_t;
+
+typedef struct __attribute__((packed)) {
+  uint8_t packet_type;
+  // packet_length is counted from start byte to the end of data frame
+  // in this case: 1 start byte + 2 info bytes + 5 byte of data = 8 bytes
+  uint8_t packet_length; 
+} info_frame_t;
+
+
+typedef struct __attribute__((packed)) {
+  info_frame_t info;
+  data_frame_t data;
+} uart_packet_t;
+
