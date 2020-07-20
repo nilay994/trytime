@@ -12,6 +12,8 @@
 #include <string.h>
 #include <uart_struct.h>
 
+#define DBG
+
 // rx buffer deep copied between receive thread and uart_driver
 uart_packet_t uart_packet;
 
@@ -258,12 +260,12 @@ void SerialPort::serialPortTransmitThread() {
 		}
 		#endif
 
-		const int written = write(serial_port_fd_, buffer, uartFrameLength_);
+		const int written = write(serial_port_fd_, buffer, uartFrameLength_ + 3);
   		// tcflush(serial_port_fd_, TCOFLUSH); // might not work on odroid
-  		if (written != uartFrameLength_) {
+  		if (written != uartFrameLength_ + 3) {
 			std::cout << "[Serial] written wrong bytes" << std::endl;
 		}
-		std::this_thread::sleep_for(std::chrono::milliseconds(200));
+		std::this_thread::sleep_for(std::chrono::milliseconds(7));
 	}
 }
 
