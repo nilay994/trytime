@@ -43,6 +43,8 @@ class robot:
         self.vel = vel
         # create copies for after conflict resolution
         self.initvel = initvel
+        print("-------------Initvel----------")
+        print(initvel)
         self.firstRun = True
 
     def move(self):
@@ -143,7 +145,8 @@ def detect(robot1, robot2):
     
     if (cntfalse > 5):
         # TODO: WHAT!: How is initvel changing? It is only done in the constructor!!
-        # print(robot1.initvel)
+        print("Init vel later!!:::!!!!werewrwerwer3242342342")
+        print(robot1.initvel, id(robot1.initvel))
         robot1.vel = robot1.initvel
 
 def vo_resolve_by_project(robot_a, angle1, angle2, centre):
@@ -201,7 +204,7 @@ def main():
 
     cnt = 0
     toggle = 0
-    for i in range(40):
+    for i in range(70):
         # plt.cla()
         
         plt.plot(block = 'False')
