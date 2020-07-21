@@ -12,7 +12,7 @@
 #include <string.h>
 #include <uart_struct.h>
 
-#define DBG
+// #define DBG
 
 // rx buffer deep copied between receive thread and uart_driver
 uart_packet_t uart_packet;
@@ -184,7 +184,7 @@ void SerialPort::serialPortReceiveThread() {
 					// A valid SBUS message must have to correct header and footer byte
 					// as well as zeros in the four most significant bytes of the flag
 					// byte (byte 23)
-					if (bytes_buf.front() == HeaderByte_ && bytes_buf[uartFrameLength_ - 1] == FooterByte_) {
+					if (bytes_buf.front() == HeaderByte_ && bytes_buf[uartFrameLength_ + 3 - 1] == FooterByte_) {
 						// Populate the uart-rx struct
 						for (uint8_t i = 0; i < uartFrameLength_; i++) {
 							uart_msg_bytes[i] = bytes_buf.front();
@@ -193,7 +193,7 @@ void SerialPort::serialPortReceiveThread() {
 						}
 						valid_uart_message_received = true;
 
-						memcpy(&uart_packet, &(this->uart_msg_bytes[1]), uartFrameLength_);
+						memcpy(&uart_packet, &(this->uart_msg_bytes[1 + 2]), uartFrameLength_);
             			// perfect deparsing from driver.. :)
 						// std::cout << "val: " << input_dev.pot << std::endl;
 
@@ -265,7 +265,7 @@ void SerialPort::serialPortTransmitThread() {
   		if (written != uartFrameLength_ + 3) {
 			std::cout << "[Serial] written wrong bytes" << std::endl;
 		}
-		std::this_thread::sleep_for(std::chrono::milliseconds(7));
+		std::this_thread::sleep_for(std::chrono::milliseconds(500));
 	}
 }
 
