@@ -1,5 +1,5 @@
 /*
-    author: nilay994
+    author: nilay994 and fedepare
     Program to (a) make char arrays from a struct and transfer them over serial (b) populate struct from rx_buffer. Uses "LSB first".
     Stefano: Keep in mind that ARM CPUs (at least up to ARM7 and 9) swap the 4 least significant bytes with the most significant ones in memory for double precision floats (with respect to Intel CPUs…) so a memcpy can give you quite a headache…
     One of the simple approaches might be typecasting but keep an eye on the byte order. A stupid solution might be creating an union between a float and an array of 4 bytes. You can use both notations and perform any order swap you want in a very easy way. 
@@ -33,41 +33,7 @@ typedef struct __attribute__((packed)) {
 } info_frame_t;
 
 /*
-PERCEVITE WIFI
-+--------+------------+--------------+--------------------------------+--------------+--------------+-------------------+----------+
-| field  | start byte | frame type   | packet length                  | pot          | button       | checksum          | end byte |
-|        |            | (info frame) | (info frame)                   | (data frame) | (data frame) |                   |          |
-+--------+------------+--------------+--------------------------------+--------------+--------------+-------------------+----------+
-| value  | $          | DATA/OTHER   | start byte to data length      | float        | fragged bool | info + data frame | *        |
-+--------+------------+--------------+--------------------------------+--------------+--------------+-------------------+----------+
-| length | 1B         | 1B           | 1B                             | 4B           | 1B           | 1B                | 1B       |
-+--------+------------+--------------+--------------------------------+--------------+--------------+-------------------+----------+
-*/
-
-typedef struct __attribute__((packed)) {
-  float pot;
-  uint8_t but0:1;
-  uint8_t but1:1;
-  uint8_t but2:1;
-  uint8_t but3:1;
-  uint8_t but4:1;
-} data_frame_t;
-
-typedef struct __attribute__((packed)) {
-  info_frame_t info;
-  data_frame_t data;
-} uart_packet_t;
-
-/*
 LOIHI LANDER - RX DIVERGENCE
-+--------+------------+--------------+--------------------------------+--------------+----------------+-------------------+----------+
-| field  | start byte | frame type   | packet length                  | divergence   | divergence_dot | checksum          | end byte |
-|        |            | (info frame) | (info frame)                   | (data frame) | (data frame)   |                   |          |
-+--------+------------+--------------+--------------------------------+--------------+----------------+-------------------+----------+
-| value  | $          | DATA/OTHER   | start byte to data length      | float        | float          | info + data frame | *        |
-+--------+------------+--------------+--------------------------------+--------------+----------------+-------------------+----------+
-| length | 1B         | 1B           | 1B                             | 4B           | 4B             | 1B                | 1B       |
-+--------+------------+--------------+--------------------------------+--------------+----------------+-------------------+----------+
 */
 
 typedef struct __attribute__((packed)) {
@@ -81,5 +47,16 @@ typedef struct __attribute__((packed)) {
   divergence_frame_t data;
 } divergence_packet_t;
 
+/*
+LOIHI LANDER - TX THURST
+*/
 
+typedef struct __attribute__((packed)) {
+  int cnt;
+  float thurst;
+} thurst_frame_t;
 
+typedef struct __attribute__((packed)) {
+  info_frame_t info;
+  thurst_frame_t data;
+} thurst_packet_t;

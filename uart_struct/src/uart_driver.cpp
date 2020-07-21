@@ -31,9 +31,9 @@ SerialPort::SerialPort(const std::string &port, int uart_speed)
 		std::cout << "[Serial] Error. Can't start receiver thread" << std::endl;
 	}
 	
-	// if (!startTransmitThread()) {
-	// 	std::cout << "[Serial] Error. Can't start transmit thread" << std::endl;
-	// }
+	if (!startTransmitThread()) {
+		std::cout << "[Serial] Error. Can't start transmit thread" << std::endl;
+	}
 }
 
 SerialPort::~SerialPort() { disconnectSerialPort(); }
@@ -160,13 +160,13 @@ void SerialPort::serialPortReceiveThread() {
 	// A lot of heap?!
 	std::deque<uint8_t> bytes_reverse_buf;
 
+	// TODO: communicate divergence values with loihi
 	// while atomic lock of thread
 	while (!receiver_thread_should_exit_) {
 
 		// Buffer to read bytes from serial port. We make it large enough to
 		// potentially contain 4 sbus messages but its actual size probably does
 		// not matter too much
-		// TODO: 4 struct size
 		uint8_t read_buf[4 * uartFrameLength_];
 
 		if (poll(fds, 1, kPollTimeoutMilliSeconds_) > 0) {
@@ -199,12 +199,13 @@ void SerialPort::serialPortReceiveThread() {
 
 						memcpy(&uart_packet, &(this->uart_msg_bytes[1]), uartFrameLength_);
 
-            			// perfect deparsing from driver.. :)
+            			#ifdef DBG
 						std::cout << "reading cnt: " << cnt << std::endl;
 						std::cout << "ppz cnt: " << uart_packet.data.cnt << std::endl;
 						std::cout << "divergence: " << uart_packet.data.divergence << std::endl;
             			std::cout << "divergence_dot: " << uart_packet.data.divergence_dot << std::endl;
             			std::cout << "-----------" << std::endl;
+						#endif
 
 						// WARNING: Only deep copying last valid message. Queue not created.
 						ioctl(serial_port_fd_, TCFLSH, 0); // flush receive
@@ -233,43 +234,49 @@ void SerialPort::serialPortReceiveThread() {
 
 void SerialPort::serialPortTransmitThread() {
 	std::cout << "[Serial] TransmitThread spawned" << std::endl;
-	uint8_t buffer[10] = {0x24, 0x01, 0x08, 0x01, 0x01, 0x01, 0x01, 0x01, 0x0e, 0x2a};
 
+	// Initialize buffer with start and end bytes 
+	uint8_t buffer[3 + sizeof(thurst_packet_t)] = {0};
+	buffer[0] = {0x24};
+	buffer[3 + sizeof(thurst_packet_t) - 1] = {0x2a};
+
+	// TODO: Send thurst from loihi
+	// While loop that transmits information to bebop
 	while(1) {
-		static int var = 1;
-		uart_packet_t uart_packet_tx = {0};
+		static int cnt = 0;
+		cnt++;
+
+		thurst_packet_t uart_packet_tx = {0};
 
 		uart_packet_tx.info.packet_type = DATA_FRAME;
-		uart_packet_tx.info.packet_length = 0x08; // 1 start byte, 2 info bytes, 5 data bytes
-		uart_packet_tx.data.pot = var;
-		var = var + 1;
+		uart_packet_tx.info.packet_length = sizeof(thurst_packet_t);
+		uart_packet_tx.data.thurst = 0.25f;
+		uart_packet_tx.data.cnt = cnt;
 
-		// calc checksum
+		// Checksum
 		uint8_t checksum = 0;
 		uint8_t *p = (uint8_t *) &uart_packet_tx;
-		for (int i = 0; i < sizeof(uart_packet_t); i++) {
+		for (int i = 0; i < sizeof(thurst_packet_t); i++) {
     		checksum += p[i];
 		}
 
-		#ifdef DBG
-			printf("\n\nchecksum: 0x%02x\n", checksum);
-		#endif
-
-		memcpy(&buffer[1], &uart_packet_tx, sizeof(uart_packet_t));
-		memcpy(&buffer[8], &checksum, sizeof(uint8_t));
+		// Copy message and checksum to buffer
+		memcpy(&buffer[1], &uart_packet_tx, sizeof(thurst_packet_t));
+		memcpy(&buffer[3 + sizeof(thurst_packet_t) - 2], &checksum, sizeof(uint8_t));
 
 		#ifdef DBG
-		for (int i = 0; i < sizeof(uart_packet_t) + 3; i++) {
+		printf("%i, ", cnt);
+		for (int i = 0; i < sizeof(thurst_packet_t) + 3; i++) {
 			printf("0x%02x, ", buffer[i]);
 		}
+		std::cout << std::endl;
 		#endif
 
 		const int written = write(serial_port_fd_, buffer, uartFrameLength_ + 3);
-  		// tcflush(serial_port_fd_, TCOFLUSH); // might not work on odroid
   		if (written != uartFrameLength_ + 3) {
 			std::cout << "[Serial] written wrong bytes" << std::endl;
 		}
-		std::this_thread::sleep_for(std::chrono::milliseconds(500));
+		std::this_thread::sleep_for(std::chrono::milliseconds(5));
 	}
 }
 
