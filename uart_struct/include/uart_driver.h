@@ -15,7 +15,7 @@ class SerialPort {
                 ~SerialPort();
                 void serialPortReceiveThread();
                 void serialPortTransmitThread();
-                uint8_t uart_msg_bytes[sizeof(divergence_packet_t)+1];
+                uint8_t uart_msg_bytes[sizeof(divergence_packet_t) + 3];
                 bool valid_uart_message_received = false;
 
         private:

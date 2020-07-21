@@ -146,6 +146,7 @@ void SerialPort::serialPortReceiveThread() {
 	fds[0].fd = serial_port_fd_;
 	fds[0].events = POLLIN;
 	std::cout << "[Serial] ReceiveThread spawned" << std::endl;
+
 	// init of thread
 	uint8_t init_buf[10];
 	while (read(serial_port_fd_, init_buf, sizeof(init_buf)) > 0) {
@@ -157,12 +158,12 @@ void SerialPort::serialPortReceiveThread() {
 	}
 
 	// A lot of heap?!
-	std::deque<uint8_t> bytes_buf;
+	std::deque<uint8_t> bytes_reverse_buf;
 
 	// while atomic lock of thread
 
 	while (!receiver_thread_should_exit_) {
-			// usleep(1000000);
+		// usleep(1000000);
 		// Buffer to read bytes from serial port. We make it large enough to
 		// potentially contain 4 sbus messages but its actual size probably does
 		// not matter too much
@@ -178,28 +179,27 @@ void SerialPort::serialPortReceiveThread() {
 				cnt ++;
 
 				for (ssize_t i = 0; i < nread; i++) {
-					bytes_buf.push_back(read_buf[i]);
+					bytes_reverse_buf.push_front(read_buf[i]);
 					// printf("0x%02x,", read_buf[i]);
 				}
 
 				valid_uart_message_received = false;
-				memset(uart_msg_bytes, 0, uartFrameLength_+1);
+				memset(uart_msg_bytes, 0, uartFrameLength_ + 3);
 
 				// The potential message should at least the size of the expected array
-				while (bytes_buf.size() >= uartFrameLength_ + 3) {
+				while (bytes_reverse_buf.size() >= uartFrameLength_ + 3) {
 
-					// Check if we have a potentially valid SBUS message
-					if (bytes_buf.front() == HeaderByte_ && bytes_buf[uartFrameLength_ + 2] == FooterByte_) {
-						
+					if (bytes_reverse_buf.front() == FooterByte_ && bytes_reverse_buf[uartFrameLength_ + 2] == HeaderByte_) {
+
 						// Populate the uart-rx struct
-						for (uint8_t i = 0; i < uartFrameLength_+1; i++) {
-							uart_msg_bytes[i] = bytes_buf.front();
-							bytes_buf.pop_front();
-							// printf("0x%02x,", uart_msg_bytes[i]);
+						for (uint8_t i = 0; i < uartFrameLength_+3; i++) {
+							uart_msg_bytes[uartFrameLength_ + 3 - 1 - i] = bytes_reverse_buf.front();
+							bytes_reverse_buf.pop_front();
 						}
 						valid_uart_message_received = true;
 
 						memcpy(&uart_packet, &(this->uart_msg_bytes[1]), uartFrameLength_);
+
             			// perfect deparsing from driver.. :)
 						std::cout << "reading cnt: " << cnt << std::endl;
 						std::cout << "ppz cnt: " << uart_packet.data.cnt << std::endl;
@@ -213,7 +213,7 @@ void SerialPort::serialPortReceiveThread() {
 
 					} else {
 						std::cout << "[UART packet] Header and Footer not found" << std::endl;
-						bytes_buf.pop_front();
+						bytes_reverse_buf.pop_front();
 					}
 				}
 
