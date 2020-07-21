@@ -20,7 +20,7 @@ int main(int argc, char** argv) {
     }
     
     SerialPort *obj = new SerialPort(uart_port, uart_speed);
-    uart_packet_t uart_rx_buffer;
+    divergence_packet_t uart_rx_buffer;
 
     while(1) {
 
@@ -29,8 +29,10 @@ int main(int argc, char** argv) {
             //     printf("0x%02x,", obj->uart_msg_bytes[i]);
             // }
             // printf("\n");
-            memcpy(&uart_rx_buffer, &(obj->uart_msg_bytes[1]), FRAMELEN);
-            std::cout << "val: " << uart_rx_buffer.data.pot << std::endl;
+            // memcpy(&uart_rx_buffer, &(obj->uart_msg_bytes[1]), FRAMELEN);
+            // std::cout << "divergence: " << uart_rx_buffer.data.divergence << std::endl;
+            // std::cout << "divergence_dot: " << uart_rx_buffer.data.divergence_dot << std::endl;
+            // std::cout << "-----------" << std::endl;
         } 
         // TODO: is the else needed? spsc or deep copy decide,
         // exiting ctrl+c difficult while serial is high speed

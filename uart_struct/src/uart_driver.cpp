@@ -15,7 +15,7 @@
 // #define DBG
 
 // rx buffer deep copied between receive thread and uart_driver
-uart_packet_t uart_packet;
+divergence_packet_t uart_packet;
 
 SerialPort::SerialPort(const std::string &port, int uart_speed)
 	: receiver_thread_(),
@@ -31,9 +31,9 @@ SerialPort::SerialPort(const std::string &port, int uart_speed)
 		std::cout << "[Serial] Error. Can't start receiver thread" << std::endl;
 	}
 	
-	if (!startTransmitThread()) {
-		std::cout << "[Serial] Error. Can't start transmit thread" << std::endl;
-	}
+	// if (!startTransmitThread()) {
+	// 	std::cout << "[Serial] Error. Can't start transmit thread" << std::endl;
+	// }
 }
 
 SerialPort::~SerialPort() { disconnectSerialPort(); }
@@ -160,7 +160,9 @@ void SerialPort::serialPortReceiveThread() {
 	std::deque<uint8_t> bytes_buf;
 
 	// while atomic lock of thread
+
 	while (!receiver_thread_should_exit_) {
+			// usleep(1000000);
 		// Buffer to read bytes from serial port. We make it large enough to
 		// potentially contain 4 sbus messages but its actual size probably does
 		// not matter too much
@@ -169,7 +171,11 @@ void SerialPort::serialPortReceiveThread() {
 
 		if (poll(fds, 1, kPollTimeoutMilliSeconds_) > 0) {
 			if (fds[0].revents & POLLIN) {
+
+				// REMARK: Take into account that read() reads (obviously) but also frees what it reads
 				const ssize_t nread = read(serial_port_fd_, read_buf, sizeof(read_buf));
+				static long int cnt = 0;
+				cnt ++;
 
 				for (ssize_t i = 0; i < nread; i++) {
 					bytes_buf.push_back(read_buf[i]);
@@ -177,38 +183,37 @@ void SerialPort::serialPortReceiveThread() {
 				}
 
 				valid_uart_message_received = false;
-				memset(uart_msg_bytes, 0, uartFrameLength_);
+				memset(uart_msg_bytes, 0, uartFrameLength_+1);
 
-				while (bytes_buf.size() >= uartFrameLength_) {
+				// The potential message should at least the size of the expected array
+				while (bytes_buf.size() >= uartFrameLength_ + 3) {
+
 					// Check if we have a potentially valid SBUS message
-					// A valid SBUS message must have to correct header and footer byte
-					// as well as zeros in the four most significant bytes of the flag
-					// byte (byte 23)
-					if (bytes_buf.front() == HeaderByte_ && bytes_buf[uartFrameLength_ + 3 - 1] == FooterByte_) {
+					if (bytes_buf.front() == HeaderByte_ && bytes_buf[uartFrameLength_ + 2] == FooterByte_) {
+						
 						// Populate the uart-rx struct
-						for (uint8_t i = 0; i < uartFrameLength_; i++) {
+						for (uint8_t i = 0; i < uartFrameLength_+1; i++) {
 							uart_msg_bytes[i] = bytes_buf.front();
 							bytes_buf.pop_front();
 							// printf("0x%02x,", uart_msg_bytes[i]);
 						}
 						valid_uart_message_received = true;
 
-						memcpy(&uart_packet, &(this->uart_msg_bytes[1 + 2]), uartFrameLength_);
+						memcpy(&uart_packet, &(this->uart_msg_bytes[1]), uartFrameLength_);
             			// perfect deparsing from driver.. :)
-						// std::cout << "val: " << input_dev.pot << std::endl;
+						std::cout << "reading cnt: " << cnt << std::endl;
+						std::cout << "ppz cnt: " << uart_packet.data.cnt << std::endl;
+						std::cout << "divergence: " << uart_packet.data.divergence << std::endl;
+            			std::cout << "divergence_dot: " << uart_packet.data.divergence_dot << std::endl;
+            			std::cout << "-----------" << std::endl;
+
+						// WARNING: Only deep copying last valid message. Queue not created.
+						ioctl(serial_port_fd_, TCFLSH, 0); // flush receive
+						break;
 
 					} else {
-						// If UART-DMA doesn't read header and footerbyte,
-						// then keep poping until you do.
 						std::cout << "[UART packet] Header and Footer not found" << std::endl;
 						bytes_buf.pop_front();
-						// warn, not in sync
-					}
-
-					// If not, pop front elements until we have a valid header byte
-					while (!bytes_buf.empty() && bytes_buf.front() != HeaderByte_) {
-						bytes_buf.pop_front();
-						std::cout<< "[UART packet] Frame aligning" << std::endl;
 					}
 				}
 

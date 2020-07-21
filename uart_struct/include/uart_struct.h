@@ -28,6 +28,23 @@ typedef enum {
 } jetson_state_t;
 
 typedef struct __attribute__((packed)) {
+  uint8_t packet_type;
+  uint8_t packet_length; 
+} info_frame_t;
+
+/*
+PERCEVITE WIFI
++--------+------------+--------------+--------------------------------+--------------+--------------+-------------------+----------+
+| field  | start byte | frame type   | packet length                  | pot          | button       | checksum          | end byte |
+|        |            | (info frame) | (info frame)                   | (data frame) | (data frame) |                   |          |
++--------+------------+--------------+--------------------------------+--------------+--------------+-------------------+----------+
+| value  | $          | DATA/OTHER   | start byte to data length      | float        | fragged bool | info + data frame | *        |
++--------+------------+--------------+--------------------------------+--------------+--------------+-------------------+----------+
+| length | 1B         | 1B           | 1B                             | 4B           | 1B           | 1B                | 1B       |
++--------+------------+--------------+--------------------------------+--------------+--------------+-------------------+----------+
+*/
+
+typedef struct __attribute__((packed)) {
   float pot;
   uint8_t but0:1;
   uint8_t but1:1;
@@ -37,15 +54,32 @@ typedef struct __attribute__((packed)) {
 } data_frame_t;
 
 typedef struct __attribute__((packed)) {
-  uint8_t packet_type;
-  // packet_length is counted from start byte to the end of data frame
-  // in this case: 1 start byte + 2 info bytes + 5 byte of data = 8 bytes
-  uint8_t packet_length; 
-} info_frame_t;
-
-
-typedef struct __attribute__((packed)) {
   info_frame_t info;
   data_frame_t data;
 } uart_packet_t;
+
+/*
+LOIHI LANDER - RX DIVERGENCE
++--------+------------+--------------+--------------------------------+--------------+----------------+-------------------+----------+
+| field  | start byte | frame type   | packet length                  | divergence   | divergence_dot | checksum          | end byte |
+|        |            | (info frame) | (info frame)                   | (data frame) | (data frame)   |                   |          |
++--------+------------+--------------+--------------------------------+--------------+----------------+-------------------+----------+
+| value  | $          | DATA/OTHER   | start byte to data length      | float        | float          | info + data frame | *        |
++--------+------------+--------------+--------------------------------+--------------+----------------+-------------------+----------+
+| length | 1B         | 1B           | 1B                             | 4B           | 4B             | 1B                | 1B       |
++--------+------------+--------------+--------------------------------+--------------+----------------+-------------------+----------+
+*/
+
+typedef struct __attribute__((packed)) {
+  int cnt;
+  float divergence;
+  float divergence_dot;
+} divergence_frame_t;
+
+typedef struct __attribute__((packed)) {
+  info_frame_t info;
+  divergence_frame_t data;
+} divergence_packet_t;
+
+
 

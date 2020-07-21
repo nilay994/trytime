@@ -9,15 +9,13 @@ Deep copy from:
 #include <atomic>
 #include "uart_struct.h"
 
-#define FRAMELEN 7 // with start and end
-
 class SerialPort {
         public:
                 SerialPort(const std::string& port, int uart_speed);
                 ~SerialPort();
                 void serialPortReceiveThread();
                 void serialPortTransmitThread();
-                uint8_t uart_msg_bytes[FRAMELEN];
+                uint8_t uart_msg_bytes[sizeof(divergence_packet_t)+1];
                 bool valid_uart_message_received = false;
 
         private:
@@ -35,6 +33,6 @@ class SerialPort {
                 static constexpr uint8_t HeaderByte_ = 0x24;
                 static constexpr uint8_t FooterByte_ = 0x2A;
                 static constexpr int kPollTimeoutMilliSeconds_ = 500;
-                static constexpr int uartFrameLength_ = FRAMELEN;
+                static constexpr int uartFrameLength_ = sizeof(divergence_packet_t);
 
 };
