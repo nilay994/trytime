@@ -161,9 +161,8 @@ void SerialPort::serialPortReceiveThread() {
 	std::deque<uint8_t> bytes_reverse_buf;
 
 	// while atomic lock of thread
-
 	while (!receiver_thread_should_exit_) {
-		// usleep(1000000);
+
 		// Buffer to read bytes from serial port. We make it large enough to
 		// potentially contain 4 sbus messages but its actual size probably does
 		// not matter too much
