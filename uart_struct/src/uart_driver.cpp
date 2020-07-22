@@ -113,6 +113,11 @@ bool SerialPort::createTXSharedMemory() {
 		// Construct the shared structure in memory
 		loihi_tx_shm_data = new (addr) loihi_tx_shm;
 
+		// Initialize everything to zero
+		loihi_tx_shm_data->cnt = 0;
+		loihi_tx_shm_data->thurst = 0.f;
+		loihi_tx_shm_data->flag = false;
+
 		std::cout << "[SHM] Loihi TX shared memory created" << std::endl;
 
 	} catch(interprocess_exception &ex){
@@ -285,11 +290,7 @@ void SerialPort::serialPortReceiveThread() {
 						memcpy(&uart_packet, &(this->uart_msg_bytes[1]), uartFrameLength_);
 
             			#ifdef DBG
-						std::cout << "reading cnt: " << cnt << std::endl;
-						std::cout << "ppz cnt: " << uart_packet.data.cnt << std::endl;
-						std::cout << "divergence: " << uart_packet.data.divergence << std::endl;
-            			std::cout << "divergence_dot: " << uart_packet.data.divergence_dot << std::endl;
-            			std::cout << "-----------" << std::endl;
+						printf("[RX] cnt: %i, div: %f, divdot: %f\n", uart_packet.data.cnt, uart_packet.data.divergence, uart_packet.data.divergence_dot);
 						#endif
 
 						// WARNING: Only deep copying last valid message. Queue not created.
@@ -324,23 +325,37 @@ void SerialPort::serialPortReceiveThread() {
 void SerialPort::serialPortTransmitThread() {
 	std::cout << "[Serial] TransmitThread spawned" << std::endl;
 
+	// Shared memory opening
+	boost::interprocess::shared_memory_object shm_tx(open_only, LOIHI_TX_MEMNAME, read_write);
+    mapped_region region_tx(shm_tx, read_write);
+    void *addr_tx = region_tx.get_address();
+    loihi_tx_shm_data = static_cast<loihi_tx_shm*>(addr_tx);
+
 	// Initialize buffer with start and end bytes 
 	uint8_t buffer[3 + sizeof(thurst_packet_t)] = {0};
 	buffer[0] = {0x24};
 	buffer[3 + sizeof(thurst_packet_t) - 1] = {0x2a};
 
-	// TODO: Send thurst from loihi
 	// While loop that transmits information to bebop
-	while(1) {
-		static int cnt = 0;
-		cnt++;
+	while (1) {
 
+		// Wait for valid Loihi thrust measurement
+		if (!loihi_tx_shm_data->flag) {
+			continue;
+		}
+
+		// Packet initialization
 		thurst_packet_t uart_packet_tx = {0};
-
 		uart_packet_tx.info.packet_type = DATA_FRAME;
 		uart_packet_tx.info.packet_length = sizeof(thurst_packet_t);
-		uart_packet_tx.data.thurst = 0.25f;
-		uart_packet_tx.data.cnt = cnt;
+
+		// Get data from shared memory
+		uart_packet_tx.data.cnt = loihi_tx_shm_data->cnt;
+		uart_packet_tx.data.thurst = loihi_tx_shm_data->thurst;
+		loihi_tx_shm_data->flag = false;
+		#ifdef DBG
+		printf("[TX] cnt: %i, thrust: %f\n", uart_packet_tx.data.cnt, uart_packet_tx.data.thurst);
+		#endif
 
 		// Checksum
 		uint8_t checksum = 0;
@@ -352,14 +367,6 @@ void SerialPort::serialPortTransmitThread() {
 		// Copy message and checksum to buffer
 		memcpy(&buffer[1], &uart_packet_tx, sizeof(thurst_packet_t));
 		memcpy(&buffer[3 + sizeof(thurst_packet_t) - 2], &checksum, sizeof(uint8_t));
-
-		#ifdef DBG
-		printf("%i, ", cnt);
-		for (int i = 0; i < sizeof(thurst_packet_t) + 3; i++) {
-			printf("0x%02x, ", buffer[i]);
-		}
-		std::cout << std::endl;
-		#endif
 
 		const int written = write(serial_port_fd_, buffer, uartFrameLength_ + 3);
   		if (written != uartFrameLength_ + 3) {

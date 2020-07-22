@@ -67,7 +67,8 @@ typedef struct __attribute__((packed)) {
 struct loihi_rx_shm {
 
    loihi_rx_shm()
-      :  divergence(0)
+      :  cnt(0)
+      ,  divergence(0)
       ,  divergence_dot(0)
       ,  flag(false)
    {}
@@ -85,7 +86,8 @@ struct loihi_rx_shm {
 struct loihi_tx_shm {
 
    loihi_tx_shm()
-      :  thurst(0)
+      :  cnt(0)
+      ,  thurst(0)
       ,  flag(false)
    {}
 
@@ -93,6 +95,7 @@ struct loihi_tx_shm {
    boost::interprocess::interprocess_mutex mutex;
 
    // Items to fill
+   int cnt;
    float thurst;
    bool flag;
 };

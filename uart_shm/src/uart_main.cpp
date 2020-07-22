@@ -40,13 +40,24 @@ int main(int argc, char** argv) {
     std::cout << "[SHM] Linked to Loihi TX shared memory" << std::endl;
 
     while(1) {
-        if (loihi_rx_shm_data->flag) { 
-        std::cout << loihi_rx_shm_data->cnt << std::endl;
-        std::cout << loihi_rx_shm_data->divergence << std::endl;
-        std::cout << loihi_rx_shm_data->divergence_dot << std::endl;
-        std::cout << loihi_rx_shm_data->flag << std::endl;
+
+        // RX
+        // TODO: deep copy this 
+        if (loihi_rx_shm_data->flag) {
+        printf("[RX] cnt: %i, div: %f, divdot: %f\n", loihi_rx_shm_data->cnt, loihi_rx_shm_data->divergence, loihi_rx_shm_data->divergence_dot);
         loihi_rx_shm_data->flag = false;
-        std::cout << "-----------" << std::endl;
+        } else {
+            continue;
+        }
+
+        // TODO: The Loihi network should be here
+
+        // TX
+        if (!loihi_tx_shm_data->flag) {
+            loihi_tx_shm_data->cnt = loihi_rx_shm_data->cnt;
+            loihi_tx_shm_data->thurst = loihi_rx_shm_data->divergence * 2;
+            printf("[TX] cnt: %i, thrust: %f\n", loihi_tx_shm_data->cnt, loihi_tx_shm_data->thurst);
+            loihi_tx_shm_data->flag = true;
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
