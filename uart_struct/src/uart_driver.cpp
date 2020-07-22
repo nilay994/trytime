@@ -12,6 +12,16 @@
 #include <string.h>
 #include <uart_struct.h>
 
+#include <boost/interprocess/shared_memory_object.hpp>
+#include <boost/interprocess/mapped_region.hpp>
+#include <boost/interprocess/sync/scoped_lock.hpp>
+using namespace boost::interprocess;
+
+#define LOIHI_RX_MEMNAME "loihi_rx"
+#define LOIHI_TX_MEMNAME "loihi_tx"
+loihi_rx_shm *loihi_rx_shm_data;
+loihi_tx_shm *loihi_tx_shm_data;
+
 // #define DBG
 
 // rx buffer deep copied between receive thread and uart_driver
@@ -23,6 +33,14 @@ SerialPort::SerialPort(const std::string &port, int uart_speed)
 	  serial_port_fd_(-1) {
 
 	valid_uart_message_received = false;
+	if (!createRXSharedMemory()) {
+		std::cout << "[Serial] Error. Can't create RX shared memory" << std::endl;
+	}
+
+	if (!createTXSharedMemory()) {
+		std::cout << "[Serial] Error. Can't create TX shared memory" << std::endl;
+	}
+
 	if (!connectSerialPort(port, uart_speed)) {
 		std::cout << "[Serial] Error. Can't connect to port" << std::endl;
 	}
@@ -37,6 +55,76 @@ SerialPort::SerialPort(const std::string &port, int uart_speed)
 }
 
 SerialPort::~SerialPort() { disconnectSerialPort(); }
+
+bool SerialPort::createRXSharedMemory() {
+	try {
+
+		// Erase previous shared memory
+		shared_memory_object::remove(LOIHI_RX_MEMNAME);
+
+		// Create a shared memory object.
+		boost::interprocess::shared_memory_object shm(create_only, LOIHI_RX_MEMNAME, read_write);
+
+		// Set size
+		shm.truncate(sizeof(loihi_rx_shm));
+
+		// Map the whole shared memory in this process
+		mapped_region region(shm, read_write);
+
+		// Get the address of the mapped region
+		void *addr = region.get_address();
+
+		// Construct the shared structure in memory
+		loihi_rx_shm_data = new (addr) loihi_rx_shm;
+
+		// // TODO: remove
+		// // Lock the mutex
+		// scoped_lock<interprocess_mutex> lock(loihi_rx_shm_data->mutex);
+		// loihi_rx_shm_data->divergence = 0.75f;
+		// loihi_rx_shm_data->divergence_dot = 0.14;
+		// loihi_rx_shm_data->flag = true;
+		// // Mutex is released here
+
+		std::cout << "[SHM] Loihi RX shared memory created" << std::endl;
+
+    } catch(interprocess_exception &ex){
+      std::cout << "[SHM] RX: Boost interprocess exception: " << ex.what() << std::endl;
+      return false;
+    }
+	
+	return true;
+}
+
+bool SerialPort::createTXSharedMemory() {
+	try {
+
+		// Erase previous shared memory
+		shared_memory_object::remove(LOIHI_TX_MEMNAME);
+
+		// Create a shared memory object.
+		boost::interprocess::shared_memory_object shm(create_only, LOIHI_TX_MEMNAME, read_write);
+
+		// Set size
+		shm.truncate(sizeof(loihi_tx_shm));
+
+		// Map the whole shared memory in this process
+		mapped_region region(shm, read_write);
+
+		// Get the address of the mapped region
+		void *addr = region.get_address();
+
+		// Construct the shared structure in memory
+		loihi_tx_shm_data = new (addr) loihi_tx_shm;
+
+		std::cout << "[SHM] Loihi TX shared memory created" << std::endl;
+
+	} catch(interprocess_exception &ex){
+      std::cout << "[SHM] TX: Boost interprocess exception: " << ex.what() << std::endl;
+      return false;
+    }
+	
+	return true;
+}
 
 bool SerialPort::connectSerialPort(const std::string &port, int uart_speed) {
 	// Open serial port

@@ -19,6 +19,8 @@ class SerialPort {
                 bool valid_uart_message_received = false;
 
         private:
+                bool createRXSharedMemory();
+                bool createTXSharedMemory();
                 bool connectSerialPort(const std::string& port, int uart_speed);
                 bool configSerialPort(int uart_speed) const;
                 bool disconnectSerialPort();
