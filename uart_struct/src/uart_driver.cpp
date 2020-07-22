@@ -14,7 +14,6 @@
 
 #include <boost/interprocess/shared_memory_object.hpp>
 #include <boost/interprocess/mapped_region.hpp>
-#include <boost/interprocess/sync/scoped_lock.hpp>
 using namespace boost::interprocess;
 
 #define LOIHI_RX_MEMNAME "loihi_rx"
@@ -77,13 +76,11 @@ bool SerialPort::createRXSharedMemory() {
 		// Construct the shared structure in memory
 		loihi_rx_shm_data = new (addr) loihi_rx_shm;
 
-		// // TODO: remove
-		// // Lock the mutex
-		// scoped_lock<interprocess_mutex> lock(loihi_rx_shm_data->mutex);
-		// loihi_rx_shm_data->divergence = 0.75f;
-		// loihi_rx_shm_data->divergence_dot = 0.14;
-		// loihi_rx_shm_data->flag = true;
-		// // Mutex is released here
+		// Initialize everything to zero
+		loihi_rx_shm_data->cnt = 0;
+		loihi_rx_shm_data->divergence = 0.f;
+		loihi_rx_shm_data->divergence_dot = 0.f;
+		loihi_rx_shm_data->flag = false;
 
 		std::cout << "[SHM] Loihi RX shared memory created" << std::endl;
 
@@ -306,12 +303,16 @@ void SerialPort::serialPortReceiveThread() {
 				}
 
 				if (valid_uart_message_received) {
-					// to parse only the lastest sbus message in the buffer of 4
-					// Sometimes we read more than one sbus message at the same time
-					// By running the loop above for as long as possible before handling
-					// the received sbus message we achieve to only process the latest one
-					// const SBusMsg received_sbus_msg = parseSbusMessage(sbus_msg_bytes);
-					// handleReceivedSbusMessage(received_sbus_msg);
+					boost::interprocess::shared_memory_object shm_rx(open_only, LOIHI_RX_MEMNAME, read_write);
+					mapped_region region_rx(shm_rx, read_write);
+					void *addr_rx = region_rx.get_address();
+					loihi_rx_shm_data = static_cast<loihi_rx_shm*>(addr_rx);
+					if (!loihi_rx_shm_data->flag) {
+						loihi_rx_shm_data->cnt = uart_packet.data.cnt;
+						loihi_rx_shm_data->divergence = uart_packet.data.divergence;
+						loihi_rx_shm_data->divergence_dot = uart_packet.data.divergence_dot;
+						loihi_rx_shm_data->flag = true;
+					}
 				}
 			}
 		}

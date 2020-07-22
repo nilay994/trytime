@@ -76,6 +76,7 @@ struct loihi_rx_shm {
    boost::interprocess::interprocess_mutex mutex;
 
    // Items to fill
+   int cnt;
    float divergence;
    float divergence_dot;
    bool flag;

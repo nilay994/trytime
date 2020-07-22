@@ -45,6 +45,4 @@ boost/interprocess/shared_memory_object.hpp
 -
 boost/interprocess/mapped_region.hpp
 -
-boost/interprocess/sync/scoped_lock.hpp
--
 

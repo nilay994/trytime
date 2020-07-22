@@ -15,83 +15,39 @@
 
 #include <boost/interprocess/shared_memory_object.hpp>
 #include <boost/interprocess/mapped_region.hpp>
-#include <boost/interprocess/sync/scoped_lock.hpp>
 using namespace boost::interprocess;
-
 
 #define LOIHI_RX_MEMNAME "loihi_rx"
 #define LOIHI_TX_MEMNAME "loihi_tx"
-loihi_rx_shm *loihi_rx_shm_data;
-loihi_tx_shm *loihi_tx_shm_data;
-
-bool createRXSharedMemory();
-bool createRXSharedMemory() {
-    try {
-
-        // Create a shared memory object.
-        boost::interprocess::shared_memory_object shm(open_only, LOIHI_RX_MEMNAME, read_write);
-
-        // Map the whole shared memory in this process
-        mapped_region region(shm, read_write);
-
-        // Get the address of the mapped region
-        void *addr = region.get_address();
-
-        // Construct the shared structure in memory
-        loihi_rx_shm_data = static_cast<loihi_rx_shm*>(addr);
-
-        std::cout << "[SHM] Linked to Loihi RX shared memory" << std::endl;
-    
-    } catch(interprocess_exception &ex){
-      std::cout << "[SHM] RX Boost interprocess exception: " << ex.what() << std::endl;
-      return false;
-    }
-	
-	return true;
-}
-
-bool createTXSharedMemory();
-bool createTXSharedMemory() {
-    try {
-
-        // Create a shared memory object.
-        boost::interprocess::shared_memory_object shm(open_only, LOIHI_TX_MEMNAME, read_write);
-
-        // Map the whole shared memory in this process
-        mapped_region region(shm, read_write);
-
-        // Get the address of the mapped region
-        void *addr = region.get_address();
-
-        // Construct the shared structure in memory
-        loihi_tx_shm_data = static_cast<loihi_tx_shm*>(addr);
-
-        std::cout << "[SHM] Linked to Loihi TX shared memory" << std::endl;
-    
-    } catch(interprocess_exception &ex){
-      std::cout << "[SHM] TX Boost interprocess exception: " << ex.what() << std::endl;
-      return false;
-    }
-	
-	return true;
-}
 
 
 int main(int argc, char** argv) {
+    loihi_rx_shm *loihi_rx_shm_data;
+    loihi_tx_shm *loihi_tx_shm_data;
 
-    if (!createRXSharedMemory()) {
-		std::cout << "[SHM] Error. Can't link to Loihi RX shared memory" << std::endl;
-        return 0;
-	}
+    // RX shared memory (divergence, divergence_dot, flag)
+    boost::interprocess::shared_memory_object shm_rx(open_only, LOIHI_RX_MEMNAME, read_write);
+    mapped_region region_rx(shm_rx, read_write);
+    void *addr_rx = region_rx.get_address();
+    loihi_rx_shm_data = static_cast<loihi_rx_shm*>(addr_rx);
+    std::cout << "[SHM] Linked to Loihi RX shared memory" << std::endl;
 
-	if (!createTXSharedMemory()) {
-		std::cout << "[SHM] Error. Error. Can't link to Loihi TX shared memory" << std::endl;
-        return 0;
-	}
+    // TX shared memory (thrust, flag)
+    boost::interprocess::shared_memory_object shm_tx(open_only, LOIHI_TX_MEMNAME, read_write);
+    mapped_region region_tx(shm_tx, read_write);
+    void *addr_tx = region_tx.get_address();
+    loihi_tx_shm_data = static_cast<loihi_tx_shm*>(addr_tx);
+    std::cout << "[SHM] Linked to Loihi TX shared memory" << std::endl;
 
     while(1) {
-
-
+        if (loihi_rx_shm_data->flag) { 
+        std::cout << loihi_rx_shm_data->cnt << std::endl;
+        std::cout << loihi_rx_shm_data->divergence << std::endl;
+        std::cout << loihi_rx_shm_data->divergence_dot << std::endl;
+        std::cout << loihi_rx_shm_data->flag << std::endl;
+        loihi_rx_shm_data->flag = false;
+        std::cout << "-----------" << std::endl;
+        }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
