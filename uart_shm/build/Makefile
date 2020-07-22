@@ -111,17 +111,17 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named uart_serial_example
+# Target rules for targets named uart_shm_example
 
 # Build rule for target.
-uart_serial_example: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 uart_serial_example
-.PHONY : uart_serial_example
+uart_shm_example: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 uart_shm_example
+.PHONY : uart_shm_example
 
 # fast build rule for target.
-uart_serial_example/fast:
-	$(MAKE) -f CMakeFiles/uart_serial_example.dir/build.make CMakeFiles/uart_serial_example.dir/build
-.PHONY : uart_serial_example/fast
+uart_shm_example/fast:
+	$(MAKE) -f CMakeFiles/uart_shm_example.dir/build.make CMakeFiles/uart_shm_example.dir/build
+.PHONY : uart_shm_example/fast
 
 src/uart_main.o: src/uart_main.cpp.o
 
@@ -129,7 +129,7 @@ src/uart_main.o: src/uart_main.cpp.o
 
 # target to build an object file
 src/uart_main.cpp.o:
-	$(MAKE) -f CMakeFiles/uart_serial_example.dir/build.make CMakeFiles/uart_serial_example.dir/src/uart_main.cpp.o
+	$(MAKE) -f CMakeFiles/uart_shm_example.dir/build.make CMakeFiles/uart_shm_example.dir/src/uart_main.cpp.o
 .PHONY : src/uart_main.cpp.o
 
 src/uart_main.i: src/uart_main.cpp.i
@@ -138,7 +138,7 @@ src/uart_main.i: src/uart_main.cpp.i
 
 # target to preprocess a source file
 src/uart_main.cpp.i:
-	$(MAKE) -f CMakeFiles/uart_serial_example.dir/build.make CMakeFiles/uart_serial_example.dir/src/uart_main.cpp.i
+	$(MAKE) -f CMakeFiles/uart_shm_example.dir/build.make CMakeFiles/uart_shm_example.dir/src/uart_main.cpp.i
 .PHONY : src/uart_main.cpp.i
 
 src/uart_main.s: src/uart_main.cpp.s
@@ -147,7 +147,7 @@ src/uart_main.s: src/uart_main.cpp.s
 
 # target to generate assembly for a file
 src/uart_main.cpp.s:
-	$(MAKE) -f CMakeFiles/uart_serial_example.dir/build.make CMakeFiles/uart_serial_example.dir/src/uart_main.cpp.s
+	$(MAKE) -f CMakeFiles/uart_shm_example.dir/build.make CMakeFiles/uart_shm_example.dir/src/uart_main.cpp.s
 .PHONY : src/uart_main.cpp.s
 
 # Help Target
@@ -157,7 +157,7 @@ help:
 	@echo "... clean"
 	@echo "... depend"
 	@echo "... rebuild_cache"
-	@echo "... uart_serial_example"
+	@echo "... uart_shm_example"
 	@echo "... edit_cache"
 	@echo "... src/uart_main.o"
 	@echo "... src/uart_main.i"
