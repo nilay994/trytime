@@ -31,7 +31,7 @@ struct loihi_tx_shm {
 
    loihi_tx_shm()
       :  cnt(0)
-      ,  thurst(0)
+      ,  thrust(0)
       ,  flag(false)
    {}
 
@@ -40,6 +40,6 @@ struct loihi_tx_shm {
 
    // Items to fill
    int cnt;
-   float thurst;
+   float thrust;
    bool flag;
 };

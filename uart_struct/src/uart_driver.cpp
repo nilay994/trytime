@@ -115,7 +115,7 @@ bool SerialPort::createTXSharedMemory() {
 
 		// Initialize everything to zero
 		loihi_tx_shm_data->cnt = 0;
-		loihi_tx_shm_data->thurst = 0.f;
+		loihi_tx_shm_data->thrust = 0.f;
 		loihi_tx_shm_data->flag = false;
 
 		std::cout << "[SHM] Loihi TX shared memory created" << std::endl;
@@ -332,9 +332,9 @@ void SerialPort::serialPortTransmitThread() {
     loihi_tx_shm_data = static_cast<loihi_tx_shm*>(addr_tx);
 
 	// Initialize buffer with start and end bytes 
-	uint8_t buffer[3 + sizeof(thurst_packet_t)] = {0};
+	uint8_t buffer[3 + sizeof(thrust_packet_t)] = {0};
 	buffer[0] = {0x24};
-	buffer[3 + sizeof(thurst_packet_t) - 1] = {0x2a};
+	buffer[3 + sizeof(thrust_packet_t) - 1] = {0x2a};
 
 	// While loop that transmits information to bebop
 	while (1) {
@@ -345,28 +345,28 @@ void SerialPort::serialPortTransmitThread() {
 		}
 
 		// Packet initialization
-		thurst_packet_t uart_packet_tx = {0};
+		thrust_packet_t uart_packet_tx = {0};
 		uart_packet_tx.info.packet_type = DATA_FRAME;
-		uart_packet_tx.info.packet_length = sizeof(thurst_packet_t);
+		uart_packet_tx.info.packet_length = sizeof(thrust_packet_t);
 
 		// Get data from shared memory
 		uart_packet_tx.data.cnt = loihi_tx_shm_data->cnt;
-		uart_packet_tx.data.thurst = loihi_tx_shm_data->thurst;
+		uart_packet_tx.data.thrust = loihi_tx_shm_data->thrust;
 		loihi_tx_shm_data->flag = false;
 		#ifdef DBG
-		printf("[TX] cnt: %i, thrust: %f\n", uart_packet_tx.data.cnt, uart_packet_tx.data.thurst);
+		printf("[TX] cnt: %i, thrust: %f\n", uart_packet_tx.data.cnt, uart_packet_tx.data.thrust);
 		#endif
 
 		// Checksum
 		uint8_t checksum = 0;
 		uint8_t *p = (uint8_t *) &uart_packet_tx;
-		for (int i = 0; i < sizeof(thurst_packet_t); i++) {
+		for (int i = 0; i < sizeof(thrust_packet_t); i++) {
     		checksum += p[i];
 		}
 
 		// Copy message and checksum to buffer
-		memcpy(&buffer[1], &uart_packet_tx, sizeof(thurst_packet_t));
-		memcpy(&buffer[3 + sizeof(thurst_packet_t) - 2], &checksum, sizeof(uint8_t));
+		memcpy(&buffer[1], &uart_packet_tx, sizeof(thrust_packet_t));
+		memcpy(&buffer[3 + sizeof(thrust_packet_t) - 2], &checksum, sizeof(uint8_t));
 
 		const int written = write(serial_port_fd_, buffer, uartFrameLength_ + 3);
   		if (written != uartFrameLength_ + 3) {

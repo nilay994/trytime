@@ -49,18 +49,18 @@ typedef struct __attribute__((packed)) {
 } divergence_packet_t;
 
 /*
-LOIHI LANDER - TX THURST
+LOIHI LANDER - TX thrust
 */
 
 typedef struct __attribute__((packed)) {
   int cnt;
-  float thurst;
-} thurst_frame_t;
+  float thrust;
+} thrust_frame_t;
 
 typedef struct __attribute__((packed)) {
   info_frame_t info;
-  thurst_frame_t data;
-} thurst_packet_t;
+  thrust_frame_t data;
+} thrust_packet_t;
 
 /* SHARED MEMORY */
 
@@ -87,7 +87,7 @@ struct loihi_tx_shm {
 
    loihi_tx_shm()
       :  cnt(0)
-      ,  thurst(0)
+      ,  thrust(0)
       ,  flag(false)
    {}
 
@@ -96,6 +96,6 @@ struct loihi_tx_shm {
 
    // Items to fill
    int cnt;
-   float thurst;
+   float thrust;
    bool flag;
 };

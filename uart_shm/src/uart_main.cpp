@@ -20,6 +20,7 @@ using namespace boost::interprocess;
 #define LOIHI_RX_MEMNAME "loihi_rx"
 #define LOIHI_TX_MEMNAME "loihi_tx"
 
+// #define DBG
 
 int main(int argc, char** argv) {
     loihi_rx_shm *loihi_rx_shm_data;
@@ -39,26 +40,36 @@ int main(int argc, char** argv) {
     loihi_tx_shm_data = static_cast<loihi_tx_shm*>(addr_tx);
     std::cout << "[SHM] Linked to Loihi TX shared memory" << std::endl;
 
+    int cnt;
+    float divergence, divergence_dot, thrust;
     while(1) {
 
         // RX
-        // TODO: deep copy this 
         if (loihi_rx_shm_data->flag) {
-        printf("[RX] cnt: %i, div: %f, divdot: %f\n", loihi_rx_shm_data->cnt, loihi_rx_shm_data->divergence, loihi_rx_shm_data->divergence_dot);
-        loihi_rx_shm_data->flag = false;
+            cnt = loihi_rx_shm_data->cnt;
+            divergence = loihi_rx_shm_data->divergence;
+            divergence_dot = loihi_rx_shm_data->divergence_dot;
+            loihi_rx_shm_data->flag = false;
         } else {
             continue;
         }
+        #ifdef DBG
+        printf("[RX] cnt: %i, div: %f, divdot: %f\n", cnt, divergence, divergence_dot);
+        #endif
 
         // TODO: The Loihi network should be here
+        // Get thrust from Loihi
+        thrust = divergence * 2;
 
         // TX
         if (!loihi_tx_shm_data->flag) {
-            loihi_tx_shm_data->cnt = loihi_rx_shm_data->cnt;
-            loihi_tx_shm_data->thurst = loihi_rx_shm_data->divergence * 2;
-            printf("[TX] cnt: %i, thrust: %f\n", loihi_tx_shm_data->cnt, loihi_tx_shm_data->thurst);
+            loihi_tx_shm_data->cnt = cnt;
+            loihi_tx_shm_data->thrust = thrust;
             loihi_tx_shm_data->flag = true;
         }
+        #ifdef DBG
+        printf("[TX] cnt: %i, thrust: %f\n", cnt, thrust);
+        #endif
 
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
