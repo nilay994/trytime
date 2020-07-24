@@ -1,6 +1,5 @@
 *.a
 *.out
-*.txt
 *.csv
 uart_struct/build
 *.vscode
