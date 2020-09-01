@@ -1,7 +1,12 @@
+# vscode
+.vscode/
+
+# Build folders
+*/build/*
+*/devel/*
+
+
 *.a
 *.out
 *.csv
-uart_struct/build
-*.vscode
-spsc_try/build
 velobs/logs

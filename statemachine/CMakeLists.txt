@@ -1,8 +1,7 @@
 cmake_minimum_required(VERSION 2.8.9)
-project(uart_serial_example)
+project(statemachine)
 
 find_package(Threads REQUIRED)
-find_package(Boost REQUIRED COMPONENTS system)
 
 # Bring the headers
 include_directories(include)

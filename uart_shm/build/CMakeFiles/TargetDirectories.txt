@@ -1,3 +1,0 @@
-/home/fede/Documents/Projects/trytime/uart_shm/build/CMakeFiles/rebuild_cache.dir
-/home/fede/Documents/Projects/trytime/uart_shm/build/CMakeFiles/uart_shm_example.dir
-/home/fede/Documents/Projects/trytime/uart_shm/build/CMakeFiles/edit_cache.dir
