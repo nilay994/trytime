@@ -1,19 +1,18 @@
 cmake_minimum_required(VERSION 2.8.9)
 project(statemachine)
 
-find_package(Threads REQUIRED)
+# find_package(Threads REQUIRED)
 
 # Bring the headers
 include_directories(include)
-include_directories(${Boost_INCLUDE_DIR})
 
 # Can manually add the sources using the set command as follows:
-set(SOURCES src/uart_driver.cpp src/uart_main.cpp)
+set(SOURCES src/statemachine.cpp)
 
 # However, the file(GLOB...) allows for wildcard additions:
 # file(GLOB SOURCES "src/*.cpp")
 
-add_executable(uart_serial_example ${SOURCES})
+add_executable(statemachine_example ${SOURCES})
 
 # required for forcing -lpthread
-target_link_libraries(uart_serial_example ${CMAKE_THREAD_LIBS_INIT} ${Boost_LIBRARIES} -lrt)
+# target_link_libraries(state_machine_example ${CMAKE_THREAD_LIBS_INIT} ${Boost_LIBRARIES} -lrt)
