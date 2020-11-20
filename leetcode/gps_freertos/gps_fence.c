@@ -56,6 +56,7 @@ const float LONGITUDE_REFERENCE =  6.618629f;
 
 #define GPGLL_UPDATE_RATE_DELAY 500  // 500ms, 2Hz
 #define EARTH_R 6371000
+#define D2R 0.01745f
 
 /**=============================================================================
  **                             Private Typedefs
@@ -127,8 +128,8 @@ void gps_fence_task(void *pvParameters)
 */
 void calc_dist(lla* p1, lla* p2, float* dist)
 {
-     float angle = acosf(sinf(p1->lat)*sinf(p2->lat)
-                 + cosf(p1->lat)*cosf(p2->lat)*cosf(absf(p1->lon - p2->lon)));
+     float angle = acosf(sinf(p1->lat * D2R)*sinf(p2->lat * D2R)
+                 + cosf(p1->lat * D2R)*cosf(p2->lat * D2R)*cosf(D2R * fabsf(p1->lon - p2->lon)));
      *dist = EARTH_R * angle;
 }
 
