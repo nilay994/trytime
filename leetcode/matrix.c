@@ -27,7 +27,7 @@ void print_matrix(void **a_ptr, int m, int n) {
 		for (int j = 0; j < n; j++) {
 			// find address of elements, typecast to pointer datatype (unsigned int)
 			// print only LSB of memory location
-			printf("0x%02x\t", (unsigned int)(& mat[i][j]));
+			printf("0x%hhx\t", (unsigned int)(& mat[i][j]));
 		}
 		printf("\n");
 	}
