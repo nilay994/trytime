@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="210mm"
+   height="297mm"
+   viewBox="0 0 210 297"
+   version="1.1"
+   id="svg8"
+   inkscape:version="1.0.1 (1.0.1+r74)"
+   sodipodi:docname="setup.svg"
+   inkscape:export-filename="./setup.png"
+   inkscape:export-xdpi="200"
+   inkscape:export-ydpi="200">
+  <defs
+     id="defs2" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.35"
+     inkscape:cx="980"
+     inkscape:cy="560"
+     inkscape:document-units="mm"
+     inkscape:current-layer="layer1"
+     inkscape:document-rotation="0"
+     showgrid="false"
+     inkscape:snap-global="false"
+     inkscape:window-width="1920"
+     inkscape:window-height="948"
+     inkscape:window-x="0"
+     inkscape:window-y="27"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata5">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <rect
+       style="opacity:0.597485;fill:#ededed;stroke:#82b366;stroke-width:0.331748;stroke-linecap:square;stroke-linejoin:round;paint-order:fill markers stroke"
+       id="rect833"
+       width="65.737457"
+       height="33.354996"
+       x="25.857248"
+       y="32.822399" />
+    <rect
+       style="opacity:0.597485;fill:#ededed;stroke:#82b366;stroke-width:0.313806;stroke-linecap:square;stroke-linejoin:round;paint-order:fill markers stroke"
+       id="rect835"
+       width="61.134445"
+       height="32.012951"
+       x="134.12085"
+       y="28.436457" />
+    <text
+       xml:space="preserve"
+       style="font-size:9.87778px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke-width:0.264583"
+       x="138.24261"
+       y="42.071167"
+       id="text839"><tspan
+         sodipodi:role="line"
+         x="138.24261"
+         y="42.071167"
+         style="font-size:9.87778px;stroke-width:0.264583"
+         id="tspan1076">PC sending </tspan><tspan
+         sodipodi:role="line"
+         x="138.24261"
+         y="54.418392"
+         style="font-size:9.87778px;stroke-width:0.264583"
+         id="tspan1080">UART MSP</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:9.87777px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke-width:0.264583"
+       x="35.328381"
+       y="53.23436"
+       id="text839-3"><tspan
+         sodipodi:role="line"
+         id="tspan837-6"
+         x="35.328381"
+         y="53.23436"
+         style="font-size:9.87777px;stroke-width:0.264583">Betaflight</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 136.20551,41.252743 C 90.205363,45.612917 90.205363,45.612917 90.205363,45.612917"
+       id="path859" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 88.948611,52.716051 C 137.57637,48.168364 137.57637,48.168364 137.57637,48.168364"
+       id="path861" />
+    <text
+       xml:space="preserve"
+       style="font-size:7.76111px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke-width:0.264583"
+       x="96.62542"
+       y="9.1371975"
+       id="text865"><tspan
+         sodipodi:role="line"
+         x="96.62542"
+         y="9.1371975"
+         style="font-size:7.76111px;text-align:center;text-anchor:middle;stroke-width:0.264583"
+         id="tspan1068">UART CP2102</tspan><tspan
+         sodipodi:role="line"
+         x="96.62542"
+         y="18.838585"
+         style="font-size:7.76111px;text-align:center;text-anchor:middle;stroke-width:0.264583"
+         id="tspan869">115200 MSP is</tspan><tspan
+         sodipodi:role="line"
+         x="96.62542"
+         y="28.539972"
+         style="font-size:7.76111px;text-align:center;text-anchor:middle;stroke-width:0.264583"
+         id="tspan867">birdirectional :(</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 156.37669,66.674108 c -45.78839,19.345118 -77.6618,1.781823 -77.6618,1.781823"
+       id="path889" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 158.22586,74.915147 C 112.43747,94.260265 80.564057,76.69697 80.564057,76.69697"
+       id="path889-7" />
+    <text
+       xml:space="preserve"
+       style="font-size:8.46667px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke-width:0.264583"
+       x="62.8228"
+       y="91.035599"
+       id="text908"><tspan
+         sodipodi:role="line"
+         id="tspan906"
+         x="62.8228"
+         y="91.035599"
+         style="font-size:8.46667px;stroke-width:0.264583">Betaflight configurator</tspan><tspan
+         sodipodi:role="line"
+         x="62.8228"
+         y="101.61893"
+         style="font-size:8.46667px;stroke-width:0.264583"
+         id="tspan940">(for seeing commands on GUI)</tspan></text>
+    <rect
+       style="opacity:0.597485;fill:#ededed;stroke:#82b366;stroke-width:0.26379;stroke-linecap:square;stroke-linejoin:round;paint-order:fill markers stroke"
+       id="rect928"
+       width="47.576195"
+       height="31.402336"
+       x="46.59623"
+       y="111.81499" />
+    <text
+       xml:space="preserve"
+       style="font-size:9.87778px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke-width:0.264583"
+       x="47.985523"
+       y="129.17244"
+       id="text932"><tspan
+         sodipodi:role="line"
+         id="tspan930"
+         x="47.985523"
+         y="129.17244"
+         style="font-size:9.87778px;stroke-width:0.264583">Radio Rx</tspan></text>
+    <rect
+       style="opacity:0.597485;fill:#ededed;stroke:#82b366;stroke-width:0.292262;stroke-linecap:square;stroke-linejoin:round;paint-order:fill markers stroke"
+       id="rect934"
+       width="48.756756"
+       height="28.314018"
+       x="86.416588"
+       y="186.79187" />
+    <text
+       xml:space="preserve"
+       style="font-size:9.87778px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke-width:0.264583"
+       x="93.762024"
+       y="203.39308"
+       id="text938"><tspan
+         sodipodi:role="line"
+         id="tspan936"
+         x="93.762024"
+         y="203.39308"
+         style="font-size:9.87778px;stroke-width:0.264583">Taranis</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 38.049263,68.093158 C 50.039373,110.1374 50.039373,110.1374 50.039373,110.1374"
+       id="path942" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 63.399566,162.05315 c 12.502525,-16.71189 27.998811,-8.40975 27.998811,-8.40975 v 0"
+       id="path969" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 66.423375,166.58886 c 12.502526,-16.71188 27.99881,-8.40974 27.99881,-8.40974 v 0"
+       id="path969-9" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 70.203137,171.12457 c 12.502526,-16.71188 27.998808,-8.40974 27.998808,-8.40974 v 0"
+       id="path969-1" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 73.982899,178.6841 c 12.502526,-16.71188 27.998801,-8.40974 27.998801,-8.40974 v 0"
+       id="path969-2" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 56.595994,157.51743 c 12.502526,-16.71188 27.998812,-8.40974 27.998812,-8.40974 v 0"
+       id="path969-7" />
+    <text
+       xml:space="preserve"
+       style="font-size:7.76111px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke-width:0.264583"
+       x="20.760818"
+       y="97.883392"
+       id="text1066"><tspan
+         sodipodi:role="line"
+         id="tspan1064"
+         x="20.760818"
+         y="97.883392"
+         style="font-size:7.76111px;stroke-width:0.264583">SBUS</tspan></text>
+  </g>
+</svg>
