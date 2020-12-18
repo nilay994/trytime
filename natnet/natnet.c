@@ -157,7 +157,7 @@ void natnet_parse(unsigned char *in)
     // ========== MARKERSETS ==========
     // Number of data sets (markersets, rigidbodies, etc)
     int nMarkerSets = 0; memcpy(&nMarkerSets, ptr, 4); ptr += 4;
-    printf_natnet("Marker Set Count : %d\n", nMarkerSets);
+    // printf_natnet("Marker Set Count : %d\n", nMarkerSets);
 
     for (i = 0; i < nMarkerSets; i++) {
       // Markerset name
@@ -165,35 +165,35 @@ void natnet_parse(unsigned char *in)
       strcpy(szName, ptr);
       int nDataBytes = (int) strlen(szName) + 1;
       ptr += nDataBytes;
-      printf_natnet("Model Name: %s\n", szName);
+      // printf_natnet("Model Name: %s\n", szName);
 
       // marker data
       int nMarkers = 0; memcpy(&nMarkers, ptr, 4); ptr += 4;
-      printf_natnet("Marker Count : %d\n", nMarkers);
+      // printf_natnet("Marker Count : %d\n", nMarkers);
 
       for (j = 0; j < nMarkers; j++) {
         float x = 0; memcpy(&x, ptr, 4); ptr += 4;
         float y = 0; memcpy(&y, ptr, 4); ptr += 4;
         float z = 0; memcpy(&z, ptr, 4); ptr += 4;
-        printf_natnet("\tMarker %d : [x=%3.2f,y=%3.2f,z=%3.2f]\n", j, x, y, z);
+        // printf_natnet("\tMarker %d : [x=%3.2f,y=%3.2f,z=%3.2f]\n", j, x, y, z);
       }
     }
 
     // Unidentified markers
     int nOtherMarkers = 0; memcpy(&nOtherMarkers, ptr, 4); ptr += 4;
-    printf_natnet("Unidentified Marker Count : %d\n", nOtherMarkers);
+    // printf_natnet("Unidentified Marker Count : %d\n", nOtherMarkers);
     for (j = 0; j < nOtherMarkers; j++) {
       float x = 0.0f; memcpy(&x, ptr, 4); ptr += 4;
       float y = 0.0f; memcpy(&y, ptr, 4); ptr += 4;
       float z = 0.0f; memcpy(&z, ptr, 4); ptr += 4;
-      printf_natnet("\tMarker %d : pos = [%3.2f,%3.2f,%3.2f]\n", j, x, y, z);
+      // printf_natnet("\tMarker %d : pos = [%3.2f,%3.2f,%3.2f]\n", j, x, y, z);
     }
 
     // ========== RIGID BODIES ==========
     // Rigid bodies
     int nRigidBodies = 0;
     memcpy(&nRigidBodies, ptr, 4); ptr += 4;
-    printf_natnet("Rigid Body Count : %d\n", nRigidBodies);
+    // printf_natnet("Rigid Body Count : %d\n", nRigidBodies);
 
     // Check if there ie enough space for the rigid bodies
     if (nRigidBodies > MAX_RIGIDBODIES) {
@@ -253,7 +253,7 @@ void natnet_parse(unsigned char *in)
 
       // Associated marker positions
       memcpy(&rigidBodies[j].nMarkers, ptr, 4); ptr += 4;
-      printf_natnet("Marker Count: %d\n", rigidBodies[j].nMarkers);
+      // printf_natnet("Marker Count: %d\n", rigidBodies[j].nMarkers);
       int nBytes = rigidBodies[j].nMarkers * 3 * sizeof(float);
       float *markerData = (float *)malloc(nBytes);
       memcpy(markerData, ptr, nBytes);
@@ -273,8 +273,8 @@ void natnet_parse(unsigned char *in)
         ptr += nBytes;
 
         for (k = 0; k < rigidBodies[j].nMarkers; k++) {
-          printf_natnet("\tMarker %d: id=%d\tsize=%3.1f\tpos=[%3.2f,%3.2f,%3.2f]\n", k, markerIDs[k], markerSizes[k],
-                        markerData[k * 3], markerData[k * 3 + 1], markerData[k * 3 + 2]);
+          // printf_natnet("\tMarker %d: id=%d\tsize=%3.1f\tpos=[%3.2f,%3.2f,%3.2f]\n", k, markerIDs[k], markerSizes[k],
+          //               markerData[k * 3], markerData[k * 3 + 1], markerData[k * 3 + 2]);
         }
 
         if (markerIDs) {
@@ -286,8 +286,8 @@ void natnet_parse(unsigned char *in)
 
       } else {
         for (k = 0; k < rigidBodies[j].nMarkers; k++) {
-          printf_natnet("\tMarker %d: pos = [%3.2f,%3.2f,%3.2f]\n", k, markerData[k * 3], markerData[k * 3 + 1],
-                        markerData[k * 3 + 2]);
+          // printf_natnet("\tMarker %d: pos = [%3.2f,%3.2f,%3.2f]\n", k, markerData[k * 3], markerData[k * 3 + 1],
+          //               markerData[k * 3 + 2]);
         }
       }
       if (markerData) {
@@ -297,7 +297,7 @@ void natnet_parse(unsigned char *in)
       if (natnet_major >= 2) {
         // Mean marker error
         memcpy(&rigidBodies[j].error, ptr, 4); ptr += 4;
-        printf_natnet("Mean marker error: %3.8f\n", rigidBodies[j].error);
+        // printf_natnet("Mean marker error: %3.8f\n", rigidBodies[j].error);
       }
 
       // 2.6 and later
@@ -313,7 +313,7 @@ void natnet_parse(unsigned char *in)
     if (((natnet_major == 2) && (natnet_minor > 0)) || (natnet_major > 2)) {
       int nSkeletons = 0;
       memcpy(&nSkeletons, ptr, 4); ptr += 4;
-      printf_natnet("Skeleton Count : %d\n", nSkeletons);
+      // printf_natnet("Skeleton Count : %d\n", nSkeletons);
       for (j = 0; j < nSkeletons; j++) {
         // Skeleton id
         int skeletonID = 0;
@@ -321,7 +321,7 @@ void natnet_parse(unsigned char *in)
         // # of rigid bodies (bones) in skeleton
         int nRigidBodies = 0;
         memcpy(&nRigidBodies, ptr, 4); ptr += 4;
-        printf_natnet("Rigid Body Count : %d\n", nRigidBodies);
+        // printf_natnet("Rigid Body Count : %d\n", nRigidBodies);
         for (j = 0; j < nRigidBodies; j++) {
           // Rigid body pos/ori
           int ID = 0; memcpy(&ID, ptr, 4); ptr += 4;
@@ -332,13 +332,13 @@ void natnet_parse(unsigned char *in)
           float qy = 0; memcpy(&qy, ptr, 4); ptr += 4;
           float qz = 0; memcpy(&qz, ptr, 4); ptr += 4;
           float qw = 0; memcpy(&qw, ptr, 4); ptr += 4;
-          printf_natnet("ID : %d\n", ID);
-          printf_natnet("pos: [%3.2f,%3.2f,%3.2f]\n", x, y, z);
-          printf_natnet("ori: [%3.2f,%3.2f,%3.2f,%3.2f]\n", qx, qy, qz, qw);
+          // printf_natnet("ID : %d\n", ID);
+          // printf_natnet("pos: [%3.2f,%3.2f,%3.2f]\n", x, y, z);
+          // printf_natnet("ori: [%3.2f,%3.2f,%3.2f,%3.2f]\n", qx, qy, qz, qw);
 
           // Associated marker positions
           int nRigidMarkers = 0;  memcpy(&nRigidMarkers, ptr, 4); ptr += 4;
-          printf_natnet("Marker Count: %d\n", nRigidMarkers);
+          // printf_natnet("Marker Count: %d\n", nRigidMarkers);
           int nBytes = nRigidMarkers * 3 * sizeof(float);
           float *markerData = (float *)malloc(nBytes);
           memcpy(markerData, ptr, nBytes);
@@ -357,8 +357,8 @@ void natnet_parse(unsigned char *in)
           ptr += nBytes;
 
           for (k = 0; k < nRigidMarkers; k++) {
-            printf_natnet("\tMarker %d: id=%d\tsize=%3.1f\tpos=[%3.2f,%3.2f,%3.2f]\n", k, markerIDs[k], markerSizes[k],
-                          markerData[k * 3], markerData[k * 3 + 1], markerData[k * 3 + 2]);
+            // printf_natnet("\tMarker %d: id=%d\tsize=%3.1f\tpos=[%3.2f,%3.2f,%3.2f]\n", k, markerIDs[k], markerSizes[k],
+            //               markerData[k * 3], markerData[k * 3 + 1], markerData[k * 3 + 2]);
           }
 
           // Mean marker error (2.0 and later)
@@ -393,7 +393,7 @@ void natnet_parse(unsigned char *in)
     if (((natnet_major == 2) && (natnet_minor >= 3)) || (natnet_major > 2)) {
       int nLabeledMarkers = 0;
       memcpy(&nLabeledMarkers, ptr, 4); ptr += 4;
-      printf_natnet("Labeled Marker Count : %d\n", nLabeledMarkers);
+      // printf_natnet("Labeled Marker Count : %d\n", nLabeledMarkers);
       for (j = 0; j < nLabeledMarkers; j++) {
         int ID = 0; memcpy(&ID, ptr, 4); ptr += 4;
         float x = 0.0f; memcpy(&x, ptr, 4); ptr += 4;
@@ -410,9 +410,9 @@ void natnet_parse(unsigned char *in)
           // bool bModelSolved = params & 0x04;  // position provided by model solve
         }
 
-        printf_natnet("ID  : %d\n", ID);
-        printf_natnet("pos : [%3.2f,%3.2f,%3.2f]\n", x, y, z);
-        printf_natnet("size: [%3.2f]\n", size);
+        // printf_natnet("ID  : %d\n", ID);
+        // printf_natnet("pos : [%3.2f,%3.2f,%3.2f]\n", x, y, z);
+        // printf_natnet("size: [%3.2f]\n", size);
       }
     }
 
@@ -424,20 +424,20 @@ void natnet_parse(unsigned char *in)
       for (iForcePlate = 0; iForcePlate < nForcePlates; iForcePlate++) {
         // ID
         int ID = 0; memcpy(&ID, ptr, 4); ptr += 4;
-        printf_natnet("Force Plate : %d\n", ID);
+        // printf_natnet("Force Plate : %d\n", ID);
 
         // Channel Count
         int nChannels = 0; memcpy(&nChannels, ptr, 4); ptr += 4;
 
         // Channel Data
         for (i = 0; i < nChannels; i++) {
-          printf_natnet(" Channel %d : ", i);
+          // printf_natnet(" Channel %d : ", i);
           int nFrames = 0; memcpy(&nFrames, ptr, 4); ptr += 4;
           for (j = 0; j < nFrames; j++) {
             float val = 0.0f;  memcpy(&val, ptr, 4); ptr += 4;
-            printf_natnet("%3.2f   ", val);
+            // printf_natnet("%3.2f   ", val);
           }
-          printf_natnet("\n");
+          // printf_natnet("\n");
         }
       }
     }
@@ -449,7 +449,7 @@ void natnet_parse(unsigned char *in)
     // Timecode
     unsigned int timecode = 0;  memcpy(&timecode, ptr, 4);  ptr += 4;
     unsigned int timecodeSub = 0; memcpy(&timecodeSub, ptr, 4); ptr += 4;
-    printf_natnet("timecode : %d %d\n", timecode, timecodeSub);
+    // printf_natnet("timecode : %d %d\n", timecode, timecodeSub);
 
     // timestamp
     double timestamp = 0.0f;
