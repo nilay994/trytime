@@ -44,7 +44,7 @@
 #include <math.h>
 
 /** Debugging options */
-uint8_t verbose = 0;
+uint8_t verbose = 3;
 #define printf_natnet(...)   if(verbose > 1) fprintf (stderr, __VA_ARGS__)
 #define printf_debug(...)    if(verbose > 0) fprintf (stderr, __VA_ARGS__)
 
@@ -55,19 +55,6 @@ uint16_t natnet_cmd_port        = 1510;
 uint16_t natnet_data_port       = 1511;
 uint8_t natnet_major            = 2;
 uint8_t natnet_minor            = 9;
-
-/** Logging */
-FILE *fp;
-char *nameOfLogfile             = "natnet_log.dat";
-bool log_exists = 0;
-bool must_log = 0;
-
-/** Ivy Bus default */
-#ifdef __APPLE__
-char *ivy_bus                   = "224.255.255.255";
-#else
-char *ivy_bus                   = "127.255.255.255:2010";
-#endif
 
 /** Sample frequency and derevitive defaults */
 uint32_t freq_transmit          = 30;     ///< Transmitting frequency in Hz
@@ -514,7 +501,7 @@ bool timeout_transmit_callback()
     aircrafts[rigidBodies[i].id].connected = 1;
     aircrafts[rigidBodies[i].id].lastSample = natnet_latency;
 
-    // // Defines to make easy use of paparazzi math
+    // Defines to make easy use of paparazzi math
     // struct EnuCoor_d pos, speed;
     // struct EcefCoor_d ecef_pos;
     // struct LlaCoor_d lla_pos;
@@ -568,133 +555,6 @@ bool timeout_transmit_callback()
     //              rigidBodies[i].x, rigidBodies[i].y, rigidBodies[i].z,
     //              rigidBodies[i].ecef_vel.x, rigidBodies[i].ecef_vel.y, rigidBodies[i].ecef_vel.z);
 
-
-    /* Construct time of time of week (tow) */
-    struct timeval now;
-    gettimeofday(&now, NULL);
-    struct tm *ts = localtime(&now.tv_sec);
-
-    uint32_t tow = ts->tm_wday * (24 * 60 * 60 * 1000) + ts->tm_hour * (60 * 60 * 1000) + ts->tm_min *
-                   (60 * 1000) + ts->tm_sec * 1000 + now.tv_usec / 1000 ;
-
-    // Transmit the REMOTE_GPS packet on the ivy bus (either small or big)
-    if (small_packets) {
-      /* The local position is an int32 and the 11 LSBs of the (signed) x and y axis are compressed into
-       * a single integer. The z axis is considered unsigned and only the latter 10 LSBs are
-       * used.
-       */
-
-    //   uint32_t pos_xyz = 0;
-    //   // check if position within limits
-    //   if (fabs(pos.x * 100.) < pow(2, 10)) {
-    //     pos_xyz = (((uint32_t)(pos.x * 100.0)) & 0x7FF) << 21;                     // bits 31-21 x position in cm
-    //   } else {
-    //     fprintf(stderr, "Warning!! X position out of maximum range of small message (±%.2fm): %.2f", pow(2, 10) / 100, pos.x);
-    //     pos_xyz = (((uint32_t)(pow(2, 10) * pos.x / fabs(pos.x))) & 0x7FF) << 21;  // bits 31-21 x position in cm
-    //   }
-
-    //   if (fabs(pos.y * 100.) < pow(2, 10)) {
-    //     pos_xyz |= (((uint32_t)(pos.y * 100.0)) & 0x7FF) << 10;                    // bits 20-10 y position in cm
-    //   } else {
-    //     fprintf(stderr, "Warning!! Y position out of maximum range of small message (±%.2fm): %.2f", pow(2, 10) / 100, pos.y);
-    //     pos_xyz |= (((uint32_t)(pow(2, 10) * pos.y / fabs(pos.y))) & 0x7FF) << 10; // bits 20-10 y position in cm
-    //   }
-
-    //   if (pos.z * 100. < pow(2, 10) && pos.z > 0.) {
-    //     pos_xyz |= (((uint32_t)(fabs(pos.z) * 100.0)) & 0x3FF);                          // bits 9-0 z position in cm
-    //   } else if (pos.z > 0.) {
-    //     fprintf(stderr, "Warning!! Z position out of maximum range of small message (%.2fm): %.2f", pow(2, 10) / 100, pos.z);
-    //     pos_xyz |= (((uint32_t)(pow(2, 10))) & 0x3FF);                             // bits 9-0 z position in cm
-    //   }
-    //   // printf("ENU Pos: %u (%.2f, %.2f, %.2f)\n", pos_xyz, pos.x, pos.y, pos.z);
-
-    //   /* The speed is an int32 and the 11 LSBs of the x and y axis and 10 LSBs of z (all signed) are compressed into
-    //    * a single integer.
-    //    */
-    //   uint32_t speed_xyz = 0;
-    //   // check if speed within limits
-    //   if (fabs(speed.x * 100) < pow(2, 10)) {
-    //     speed_xyz = (((uint32_t)(speed.x * 100.0)) & 0x7FF) << 21;                       // bits 31-21 speed x in cm/s
-    //   } else {
-    //     fprintf(stderr, "Warning!! X Speed out of maximum range of small message (±%.2fm/s): %.2f", pow(2, 10) / 100, speed.x);
-    //     speed_xyz = (((uint32_t)(pow(2, 10) * speed.x / fabs(speed.x))) & 0x7FF) << 21;  // bits 31-21 speed x in cm/s
-    //   }
-
-    //   if (fabs(speed.y * 100) < pow(2, 10)) {
-    //     speed_xyz |= (((uint32_t)(speed.y * 100.0)) & 0x7FF) << 10;                      // bits 20-10 speed y in cm/s
-    //   } else {
-    //     fprintf(stderr, "Warning!! Y Speed out of maximum range of small message (±%.2fm/s): %.2f", pow(2, 10) / 100, speed.y);
-    //     speed_xyz |= (((uint32_t)(pow(2, 10) * speed.y / fabs(speed.y))) & 0x7FF) << 10; // bits 20-10 speed y in cm/s
-    //   }
-
-    //   if (fabs(speed.z * 100) < pow(2, 9)) {
-    //     speed_xyz |= (((uint32_t)(speed.z * 100.0)) & 0x3FF);                            // bits 9-0 speed z in cm/s
-    //   } else {
-    //     fprintf(stderr, "Warning!! Z Speed out of maximum range of small message (±%.2fm/s): %.2f", pow(2, 9) / 100, speed.z);
-    //     speed_xyz |= (((uint32_t)(pow(2, 9) * speed.z / fabs(speed.z))) & 0x3FF);       // bits 9-0 speed z in cm/s
-    //   }
-
-      /* The gps_small msg should always be less than 20 bytes including the pprz header of 6 bytes
-       * This is primarily due to the maximum packet size of the bluetooth msgs of 19 bytes
-       * increases the probability that a complete message will be accepted
-       */
-    //   IvySendMsg("0 REMOTE_GPS_SMALL %d %d %d %d %d",
-    //              (int16_t)(heading * 10000),       // int16_t heading in rad*1e4 (2 bytes)
-    //              pos_xyz,                          // uint32 ENU X, Y and Z in CM (4 bytes)
-    //              speed_xyz,                        // uint32 ENU velocity X, Y, Z in cm/s (4 bytes)
-    //              tow,                              // uint32_t time of day
-    //              aircrafts[rigidBodies[i].id].ac_id); // uint8 rigid body ID (1 byte)
-
-    } else {
-    //   IvySendMsg("0 REMOTE_GPS %d %d %d %d %d %d %d %d %d %d %d %d %d %d", aircrafts[rigidBodies[i].id].ac_id,
-    //              rigidBodies[i].nMarkers,                //uint8 Number of markers (sv_num)
-    //              (int)(ecef_pos.x * 100.0),              //int32 ECEF X in CM
-    //              (int)(ecef_pos.y * 100.0),              //int32 ECEF Y in CM
-    //              (int)(ecef_pos.z * 100.0),              //int32 ECEF Z in CM
-    //              (int)(DegOfRad(lla_pos.lat) * 10000000.0),        //int32 LLA latitude in deg*1e7
-    //              (int)(DegOfRad(lla_pos.lon) * 10000000.0),        //int32 LLA longitude in deg*1e7
-    //              (int)(lla_pos.alt * 1000.0),            //int32 LLA altitude in mm above elipsoid
-    //              (int)(rigidBodies[i].z * 1000.0),       //int32 HMSL height above mean sea level in mm
-    //              (int)(rigidBodies[i].ecef_vel.x * 100.0), //int32 ECEF velocity X in cm/s
-    //              (int)(rigidBodies[i].ecef_vel.y * 100.0), //int32 ECEF velocity Y in cm/s
-    //              (int)(rigidBodies[i].ecef_vel.z * 100.0), //int32 ECEF velocity Z in cm/s
-    //              tow,
-    //              (int)(heading * 10000000.0));           //int32 Course in rad*1e7
-    }
-    if (must_log) {
-      if (log_exists == 0) {
-        fp = fopen(nameOfLogfile, "w");
-        log_exists = 1;
-      }
-
-      if (fp == NULL) {
-        printf("I couldn't open file for writing.\n");
-        exit(0);
-      } else {
-        struct timeval cur_time;
-        gettimeofday(&cur_time, NULL);
-        // fprintf(fp, "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n", aircrafts[rigidBodies[i].id].ac_id,
-        //         rigidBodies[i].nMarkers,                //uint8 Number of markers (sv_num)
-        //         (int)(ecef_pos.x * 100.0),              //int32 ECEF X in CM
-        //         (int)(ecef_pos.y * 100.0),              //int32 ECEF Y in CM
-        //         (int)(ecef_pos.z * 100.0),              //int32 ECEF Z in CM
-        //         (int)(DegOfRad(lla_pos.lat) * 1e7),     //int32 LLA latitude in deg*1e7
-        //         (int)(DegOfRad(lla_pos.lon) * 1e7),     //int32 LLA longitude in deg*1e7
-        //         (int)(lla_pos.alt * 1000.0),            //int32 LLA altitude in mm above elipsoid
-        //         (int)(rigidBodies[i].z * 1000.0),       //int32 HMSL height above mean sea level in mm
-        //         (int)(rigidBodies[i].ecef_vel.x * 100.0), //int32 ECEF velocity X in cm/s
-        //         (int)(rigidBodies[i].ecef_vel.y * 100.0), //int32 ECEF velocity Y in cm/s
-        //         (int)(rigidBodies[i].ecef_vel.z * 100.0), //int32 ECEF velocity Z in cm/s
-        //         (int)(heading * 10000000.0),            //int32 Course in rad*1e7
-        //         (int)cur_time.tv_sec,
-        //         (int)cur_time.tv_usec);
-      }
-    }
-
-
-
-
-
     // Reset the velocity differentiator if we calculated the velocity
     if (rigidBodies[i].nVelocitySamples >= min_velocity_samples) {
       rigidBodies[i].vel_x = 0;
@@ -732,179 +592,10 @@ static void sample_data()
   return 1;
 }
 
-
-/** Print the program help */
-void print_help(char *filename)
-{
-  static const char *usage =
-    "Usage: %s [options]\n"
-    " Options :\n"
-    "   -h, --help                Display this help\n"
-    "   -v, --verbose <level>     Verbosity level 0-2 (0)\n\n"
-
-    "   -ac <rigid_id> <ac_id>    Use rigid ID for GPS of ac_id (multiple possible)\n\n"
-    "   -log <name of file>         Log to a file\n\n"
-    "   -multicast_addr <ip>      NatNet server multicast address (239.255.42.99)\n"
-    "   -server <ip>              NatNet server IP address (255.255.255.255)\n"
-    "   -version <id>             NatNet server version (2.5)\n"
-    "   -data_port <port>         NatNet server data socket UDP port (1510)\n"
-    "   -cmd_port <port>          NatNet server command socket UDP port (1511)\n\n"
-
-    "   -ecef <x> <y> <z>         ECEF coordinates of the tracking system\n"
-    "   -lla <lat> <lon> <alt>    Latitude, longitude and altitude of the tracking system\n"
-    "   -offset_angle <degree>    Tracking system angle offset compared to the North in degrees\n\n"
-
-    "   -tf <freq>                Transmit frequency to the ivy bus in hertz (60)\n"
-    "   -vel_samples <samples>    Minimum amount of samples for the velocity differentiator (4)\n"
-    "   -small                    Send small packets instead of bigger (FALSE)\n\n"
-
-    "   -ivy_bus <address:port>   Ivy bus address and port (127.255.255.255:2010)\n";
-  fprintf(stderr, usage, filename);
-}
-
-/** Check the amount of arguments */
-void check_argcount(int argc, char **argv, int i, int expected)
-{
-  if (i + expected >= argc) {
-    fprintf(stderr, "Option %s expected %d arguments\r\n\r\n", argv[i], expected);
-    print_help(argv[0]);
-    exit(0);
-  }
-}
-
-/** Parse the options from the commandline */
-static void parse_options(int argc, char **argv)
-{
-  int i, count_ac = 0;
-  for (i = 1; i < argc; ++i) {
-
-    // Print help
-    if (strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0) {
-      print_help(argv[0]);
-      exit(0);
-    }
-    // Set the verbosity level
-    if (strcmp(argv[i], "--verbosity") == 0 || strcmp(argv[i], "-v") == 0) {
-      check_argcount(argc, argv, i, 1);
-
-      verbose = atoi(argv[++i]);
-    }
-
-    // Set an rigid body to ivy ac_id
-    else if (strcmp(argv[i], "-ac") == 0) {
-      check_argcount(argc, argv, i, 2);
-
-      int rigid_id = atoi(argv[++i]);
-      uint8_t ac_id = atoi(argv[++i]);
-
-      if (rigid_id >= MAX_RIGIDBODIES) {
-        fprintf(stderr, "Rigid body ID must be less then %d (MAX_RIGIDBODIES)\n\n", MAX_RIGIDBODIES);
-        print_help(argv[0]);
-        exit(EXIT_FAILURE);
-      }
-      aircrafts[rigid_id].ac_id = ac_id;
-      count_ac++;
-    }
-    // See if we want to log to a file
-    else if (strcmp(argv[i], "-log") == 0) {
-      check_argcount(argc, argv, i, 1);
-
-      nameOfLogfile = argv[++i];
-      must_log = 1;
-    }
-
-    // Set the NatNet multicast address
-    else if (strcmp(argv[i], "-multicast_addr") == 0) {
-      check_argcount(argc, argv, i, 1);
-
-      natnet_multicast_addr = argv[++i];
-    }
-    // Set the NatNet server ip address
-    else if (strcmp(argv[i], "-server") == 0) {
-      check_argcount(argc, argv, i, 1);
-
-      natnet_addr = argv[++i];
-    }
-    // Set the NatNet server version
-    else if (strcmp(argv[i], "-version") == 0) {
-      check_argcount(argc, argv, i, 1);
-
-      float version = atof(argv[++i]);
-      natnet_major = (uint8_t)version;
-      natnet_minor = (uint8_t)(version * 10.0) % 10;
-    }
-    // Set the NatNet server data port
-    else if (strcmp(argv[i], "-data_port") == 0) {
-      check_argcount(argc, argv, i, 1);
-
-      natnet_data_port = atoi(argv[++i]);
-    }
-    // Set the NatNet server command port
-    else if (strcmp(argv[i], "-cmd_port") == 0) {
-      check_argcount(argc, argv, i, 1);
-
-      natnet_cmd_port = atoi(argv[++i]);
-    }
-
-    // Set the Tracking system position in ECEF
-    else if (strcmp(argv[i], "-ecef") == 0) {
-      check_argcount(argc, argv, i, 3);
-    }
-    // Set the tracking system position in LLA
-    else if (strcmp(argv[i], "-lla") == 0) {
-      check_argcount(argc, argv, i, 3);
-    }
-    // Set the tracking system offset angle in degrees
-    else if (strcmp(argv[i], "-offset_angle") == 0) {
-      check_argcount(argc, argv, i, 1);
-
-      tracking_offset_angle = atof(argv[++i]);
-    }
-
-    // Set the transmit frequency
-    else if (strcmp(argv[i], "-tf") == 0) {
-      check_argcount(argc, argv, i, 1);
-
-      freq_transmit = atoi(argv[++i]);
-    }
-    // Set the minimum amount of velocity samples for the differentiator
-    else if (strcmp(argv[i], "-vel_samples") == 0) {
-      check_argcount(argc, argv, i, 1);
-
-      min_velocity_samples = atoi(argv[++i]);
-    }
-    // Set to use small packets
-    else if (strcmp(argv[i], "-small") == 0) {
-      small_packets = 1;
-    }
-
-    // Set the ivy bus
-    else if (strcmp(argv[i], "-ivy_bus") == 0) {
-      check_argcount(argc, argv, i, 1);
-
-      ivy_bus = argv[++i];
-    }
-
-    // Unknown option
-    else {
-      fprintf(stderr, "Unknown option %s\r\n\r\n", argv[i]);
-      print_help(argv[0]);
-      exit(0);
-    }
-  }
-
-  // Check if at least one aircraft is set
-  if (count_ac < 1) {
-    fprintf(stderr, "You must specify at least one aircraft (-ac <rigid_id> <ac_id>)\n\n");
-    print_help(argv[0]);
-    exit(EXIT_FAILURE);
-  }
-}
-
 void main(int argc, char **argv)
 {
   // Parse the options from cmdline
-  parse_options(argc, argv);
+  // parse_options(argc, argv);
 
   // Create the network connections
   printf_debug("Starting NatNet listening (multicast address: %s, data port: %d, version: %d.%d)\n",
