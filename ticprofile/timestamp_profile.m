@@ -1,6 +1,6 @@
 
 % ignore the blackbox headers
-data_in = readmatrix("LOG00001.BFL.csv", 'NumHeaderLines', 109);
+data_in = readmatrix("latency-msp-rpi.BFL.csv", 'NumHeaderLines', 109);
 
 % only select time and rcCommands
 % "loopIteration","time","axisP[0]","axisP[1]","axisP[2]","axisI[0]","axisI[1]","axisI[2]","axisD[0]","axisD[1]","axisF[0]","axisF[1]","axisF[2]","rcCommand[0]","rcCommand[1]","rcCommand[2]","rcCommand[3]","setpoint[0]","setpoint[1]","setpoint[2]","setpoint[3]","vbatLatest","amperageLatest","BaroAlt","gyroADC[0]","gyroADC[1]","gyroADC[2]","accSmooth[0]","accSmooth[1]","accSmooth[2]","debug[0]","debug[1]","debug[2]","debug[3]","motor[0]","motor[1]","motor[2]","motor[3]","flightModeFlags","stateFlags","failsafePhase","rxSignalReceived","rxFlightChannelsValid","heading[0]","heading[1]","heading[2]","axisSum[0]","axisSum[1]","axisSum[2]","rcCommands[0]","rcCommands[1]","rcCommands[2]","rcCommands[3]","axisError[0]","axisError[1]","axisError[2]"
