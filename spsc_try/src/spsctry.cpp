@@ -36,7 +36,7 @@ void producer() {
 		std::cout << "producer: write available: " << _buffer_queue.write_available() << std::endl;
 		
 		// also print the queue?
-		std::this_thread::sleep_for(std::chrono::microseconds(8));
+		std::this_thread::sleep_for(std::chrono::milliseconds(4));
 	}
 }
 
@@ -52,7 +52,6 @@ void consumer() {
 		std::cout << "val1: " << buffer_data.val1 << std::endl;
 		std::this_thread::sleep_for(std::chrono::milliseconds(2));
 	}
-
 }
 
 
@@ -79,8 +78,6 @@ int main(int argv, char** argc) {
 
 	thread1.join();
 	thread2.join();
-
-
 
 	return 0;
 }
