@@ -6,8 +6,12 @@
 */devel/*
 */CMakeFiles/*
 
-
+# executables
 *.a
 *.out
 *.csv
 velobs/logs
+*.exe
+*.ilk
+*.obj
+*.pdb
