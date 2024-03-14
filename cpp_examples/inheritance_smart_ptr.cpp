@@ -6,10 +6,10 @@ public:
     virtual void speak() const {
         std::cout << "This animal makes a sound." << std::endl;
     }
-    // TODO: something is up after adding this destructor, it should never be called, right?
-    // virtual ~Animal() {
-    //    std::cout << "Animal destructor called" << std::endl;
-    // }
+    // Base class destructor will always be called after the derived (even if it is overriden)
+    virtual ~Animal() {
+       std::cout << "Animal destructor called" << std::endl;
+    }
 };
 
 class Cat : public Animal {
@@ -17,7 +17,7 @@ public:
     void speak() const override {
         std::cout << "Meow" << std::endl;
     }
-    ~Cat() {
+    ~Cat() override {
         std::cout << "Cat destructor called" << std::endl;
     }
 };
@@ -27,7 +27,7 @@ public:
     void speak() const override {
         std::cout << "Woof" << std::endl;
     }    
-    ~Dog() {
+    ~Dog() override {
         std::cout << "Dog destructor called" << std::endl;
     }
 };
@@ -35,35 +35,40 @@ public:
 int main() {
     
     // 1. Slicing example
-    std::cout << "Slicing test" << std::endl;
+    std::cout << "\nSlicing test------" << std::endl;
     {
-        std::vector<Animal> animals_sliced(2);
+        std::vector<Animal> animals_sliced;
         Cat cat;
         Dog dog;
         
         animals_sliced.push_back(cat);
         animals_sliced.push_back(dog);
 
-        // slicing occurs here, only base class is called    
+        // there might be some potential vector resizing happening here,
+        // causing a Animal::~Animal() to be called
+
         for (const auto & animal : animals_sliced) {
+            // slicing occurs here, only base class functions are called    
             animal.speak();
         }
     }
 
     // 2. Dynamic pointers test, override is successful, i.e. dynamic (late/runtime) binding can prevent slicing
-    std::cout << "New pointer test" << std::endl;
+    std::cout << "\nNew pointer test------" << std::endl;
     Animal * animals_ptr;
     {
+        // Note 1: classical heap allocation, delete must be called outside the scope, it won't dealloc itself
+        // Note 2: use new and delete as a pair, and use malloc and free as a pair. 
+        // Interchanging leads to unexpected behaviour.
         animals_ptr = new Cat();
         animals_ptr->speak();
-        // Note: classical heap allocation, free must be called even outside the scope, it won't dealloc itself
     }
     // Note: since there is no explicit virtual destructor defined in the base class, 
     // the virtual class's destructor isn't called, this is not okay.
-    free(animals_ptr);
+    delete(animals_ptr);
     
     // 3. Now avoid slicing using shared pointers
-    std::cout << "Shared pointer test" << std::endl;
+    std::cout << "\nShared pointer test------" << std::endl;
     {
         std::vector<std::shared_ptr<Animal>> animals_shared_ptr; 
         std::shared_ptr<Cat> cat_shared_ptr = std::make_shared<Cat>(); 
@@ -78,7 +83,7 @@ int main() {
     }
 
     // 4. Now avoid slicing using unique pointers
-    std::cout << "Unique pointer test" << std::endl;
+    std::cout << "\nUnique pointer test------" << std::endl;
     {
         std::vector<std::unique_ptr<Animal>> animals_unique_ptr; 
         std::unique_ptr<Cat> cat_unique_ptr = std::make_unique<Cat>(); 
@@ -92,12 +97,9 @@ int main() {
         for (size_t i = 0; i < animals_unique_ptr.size(); ++i) {
             animals_unique_ptr[i]->speak();
         } 
-
-        // TODO: probably ~Animal() is called here since ownership is transferred from derived to base, which is empty. 
-        // But adding the destuctor is an issue, it gives a strange output
     }
 
     
-    std::cout << "Program end" << std::endl;
+    std::cout << "\nProgram end" << std::endl;
     return 0;
 }
